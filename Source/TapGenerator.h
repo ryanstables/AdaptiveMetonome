@@ -68,11 +68,11 @@ public:
     double getBMP(){return bpm;};
     //update the midi buffer with the output of the tappers
     // is there another way to update the buffer rathr than passing it very time?
-    void next(MidiBuffer&, int);
+    void nextBlock(MidiBuffer&);
     
 private:
     // counter params...
-    int globalCounter, nTappers;
+    int globalCounter, noteCounter, frameCounter, beatCounter, numSynthesizedTappers;
     Tapper *tappers;
     
     // LPC model params...
@@ -93,6 +93,12 @@ private:
 /*
 void AdaptiveTappersAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
 {
+ 
+    //update the bpm...
+    tappers.setBPM(playhead.bpm);
+ 
+    
+ 
     // update host params in tapper object
     tapper.setFrameLen(buffer.getNumSamples()); // do I need to do this?
     tapper.setBPM(playhead.bpm);
