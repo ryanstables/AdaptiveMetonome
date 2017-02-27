@@ -10,8 +10,8 @@
 
 */
 
-#ifndef __APPHEADERFILE_J0NIRJ__
-#define __APPHEADERFILE_J0NIRJ__
+#ifndef __APPHEADERFILE_SMR3JG__
+#define __APPHEADERFILE_SMR3JG__
 
 #include "AppConfig.h"
 
@@ -40,10 +40,10 @@
 #if ! JUCE_DONT_DECLARE_PROJECTINFO
 namespace ProjectInfo
 {
-    const char* const  projectName    = "adaptiveTappers";
+    const char* const  projectName    = "Metro";
     const char* const  versionString  = "1.0.0";
     const int          versionNumber  = 0x10000;
 }
 #endif
 
-#endif   // __APPHEADERFILE_J0NIRJ__
+#endif   // __APPHEADERFILE_SMR3JG__

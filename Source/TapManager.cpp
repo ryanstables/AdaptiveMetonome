@@ -17,7 +17,7 @@ Tapper::Tapper()
     MNoise    = 10;  //10 ms Motor noise
     setNoteLen(256);
     setVel(127);
-    setFreq(60); // in MidiNoteNums
+    setFreq(60); // in MidiNotes
 }
 
 Tapper::~Tapper()
@@ -51,37 +51,35 @@ void Tapper::kill(MidiBuffer &midiMessages)
 
 bool Tapper::requiresNoteOn(Counter inputCounter)
 {
-    if(inputCounter.inSamples()%interval==0 && /*!noteActive &&*/ inputCounter.inSamples())
+    if(inputCounter.inSamples()%interval==0 && !noteActive && inputCounter.inSamples())
         return true;
     else
         return false;
 }
 
-// check to see if the noteOff message needs to be triggered...
 bool Tapper::requiresNoteOff()
 {
-    if (offseCounter.inSamples()>=noteLen)
+    if (offseCounter.inSamples()>=noteLen && noteActive)
         return true;
     else
         return false;
 }
 
-void Tapper::iterateCounter(MidiBuffer & midiMessages, int sampleNum, Counter &globalCounter)
+void Tapper::iterate(MidiBuffer & midiMessages, int sampleNum, Counter &globalCounter, std::vector <bool> &notesTriggered)
 {
     // check to see if noteOns/Offs need to be added....
     if(requiresNoteOn(globalCounter))
     {
-        Logger::outputDebugString("NoteON: "+String(globalCounter.inSamples()));
+        Logger::outputDebugString("ID: "+String(tapperID)+", Channel: "+String(MIDIChannel)+", NoteON: "+String(globalCounter.inSamples()));
         turnNoteOn(midiMessages, sampleNum);
+        prevOnsetTime.set(globalCounter.inSamples());
+        notesTriggered[tapperID] = true;
     }
     else if(requiresNoteOff())
     {
         turnNoteOff(midiMessages, sampleNum);
-        Logger::outputDebugString("NoteOff: "+String(globalCounter.inSamples()));
+        Logger::outputDebugString("ID: "+String(tapperID)+", Channel: "+String(MIDIChannel)+",  NoteOff: "+String(globalCounter.inSamples()));
     }
-    
-    // are these iterated properly here? i.e. never hits 0, alwys starts at sample 1?
-    globalCounter.iterate();
     
     if(noteActive) // if note is turned on, start counting towards the noteOff...
         offseCounter.iterate();
@@ -107,8 +105,8 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
         tappers.add(new Tapper);
     }
 
-    // ????
-    for(int i=0;i<tappers.size(); i++)
+    // init the tappers. Maybe move this to an updateTapperParams() fn because it needs to be updated in the processBlock too. 
+    for(int i=0; i<numSynthesizedTappers; i++)
     {
         tappers[i]->setID(i);
         tappers[i]->setChannel(i+2); // the first one is the input tapper, start from chan 2
@@ -118,6 +116,9 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
         tappers[i]->setNoteLen(22050);
         tappers[i]->setInterval(44100);
         tappers[i]->setVel(127);
+        
+        notesTriggered.push_back(false);
+        prevAsynch.push_back(0);
     }
 }
 
@@ -126,34 +127,64 @@ TapGenerator::~TapGenerator()
 {
 }
 
-void TapGenerator::initBPM(double x)
+
+bool TapGenerator::allNotesHaveBeenTriggered()
+{
+    return std::all_of(notesTriggered.cbegin(), notesTriggered.cend(), [](bool i){ return i==true; });
+}
+
+void TapGenerator::updateBPM(double x)
 {
     bpm = x;
     TKInterval = static_cast <int> (floor(60.f/bpm*fs));
-    for (int i; i<numSynthesizedTappers; i++)
+    for (int i=0; i<numSynthesizedTappers; i++)
     {
-        tappers[i]->setInterval(TKInterval); //plays constantly?!?
-        tappers[i]->setNoteLen(TKInterval/2);
+        tappers[i]->setInterval(TKInterval);
+        tappers[i]->setNoteLen(TKInterval/beatDivision);
     }
 };
+
+
+void TapGenerator::transform()
+{
+     int randWindowMs = 5;
+     int randWinInSamples = (randWindowMs/1000.0)*fs;                                    // amount of randomness to be added
+    
+    // return the interval with perturbation...
+    for (int i=0; i<numSynthesizedTappers; i++)
+    {
+        // generate scaled and offset random number...
+        int randomValue = rand.nextInt(randWinInSamples) - (randWinInSamples/2);
+        // apply it to the interval and compensate for the previous asynch...
+        tappers[i]->setInterval(tappers[i]->getInterval()+randomValue - prevAsynch[i]);
+        // update the prevAsynch values...
+        prevAsynch[i] = randomValue;
+    }
+}
+
 
 
 // run in each process bock to update the note on/offs...
 void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
 {
-    
-    // loop over the input buffer...
     for (int sampleNum=0; sampleNum<frameLen; sampleNum++)
     {
-        // loop over the synthesized tappers...
         for(int tapperNum=0; tapperNum<numSynthesizedTappers; tapperNum++)
         {
-            // TODO: if allNotesHappened(), then recalculateIntervals();
-            tappers[tapperNum]->iterateCounter(midiMessages, sampleNum, globalCounter);
-            
+            tappers[tapperNum]->iterate(midiMessages, sampleNum, globalCounter, notesTriggered);
         }
+        
+        if(allNotesHaveBeenTriggered())
+        {
+            // recalculate intervals here once all notes from the current beat have been logged...
+            Logger::outputDebugString("Beat: "+String(beatCounter.inSamples()));
+            transform(); // add pertubation to the onset times
+            for (int i=0; i<numSynthesizedTappers; i++)
+                notesTriggered[i]=false; // reset the noteTriggered flags
+            beatCounter.iterate(); // count the beats
+        }
+        globalCounter.iterate();
     }
-    
 }
 
 

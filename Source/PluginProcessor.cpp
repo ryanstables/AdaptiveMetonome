@@ -109,24 +109,37 @@ void MetroAudioProcessor::prepareToPlay (double newSampleRate, int samplesPerBlo
     synth.setCurrentPlaybackSampleRate (newSampleRate);
 }
 
+bool MetroAudioProcessor::bpmValueChanged()
+{
+    if(currentBPM!=prevBPM)
+    {
+        prevBPM = currentBPM;
+        return true;
+    }
+    else
+    {
+        prevBPM = currentBPM;
+        return false;
+    }
+}
 
 //==============================================================================
 //========= Process Block ======================================================
 //==============================================================================
 void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
 {
+    // get bpm...
     getPlayHead()->getCurrentPosition(playhead);
+    currentBPM = playhead.bpm;
     
-    // do as soon as plugin opens (we don't have access to an accurate bpm in prepareToPlay())
-    if(globalCounter.inSamples() == 0)
-    {
-        tapManager->initBPM(playhead.bpm);
-    }
+    // do when plugin opens (we don't have access to an accurate bpm in prepareToPlay())
+    if(globalCounter.inSamples() == 0 || bpmValueChanged())
+        tapManager->updateBPM(currentBPM);
     
     getPlayHead()->getCurrentPosition(playhead);
     if (playhead.isPlaying)
     {
-        Logger::outputDebugString("Frame: "+String(frameCounter.inSamples())+", playhead: "+String(playhead.timeInSamples));
+//        Logger::outputDebugString("Frame: "+String(frameCounter.inSamples())+", playhead: "+String(playhead.timeInSamples));
         
         // if the playhead is moving, start tapping...
         tapManager->nextBlock(midiMessages, globalCounter);

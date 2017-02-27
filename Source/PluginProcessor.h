@@ -59,13 +59,16 @@ public:
 private:
     
     // tappers...
-    int numSynthesizedTappers = 1;
+    int numSynthesizedTappers = 3;
     ScopedPointer<TapGenerator> tapManager;
     Counter globalCounter, frameCounter;
     bool tappersAlreadyAllocated = false;
     
     Synthesiser synth;
     AudioPlayHead::CurrentPositionInfo playhead;
+    double currentBPM = 0, prevBPM = 0;
+    
+    bool bpmValueChanged();
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MetroAudioProcessor)

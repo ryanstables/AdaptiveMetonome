@@ -11,8 +11,8 @@
 
 */
 
-#ifndef __JUCE_APPCONFIG_J0NIRJ__
-#define __JUCE_APPCONFIG_J0NIRJ__
+#ifndef __JUCE_APPCONFIG_SMR3JG__
+#define __JUCE_APPCONFIG_SMR3JG__
 
 //==============================================================================
 // [BEGIN_USER_CODE_SECTION]
@@ -107,6 +107,10 @@
 
 #ifndef    JUCE_FORCE_USE_LEGACY_PARAM_IDS
  //#define JUCE_FORCE_USE_LEGACY_PARAM_IDS
+#endif
+
+#ifndef    JUCE_USE_STUDIO_ONE_COMPATIBLE_PARAMETERS
+ //#define JUCE_USE_STUDIO_ONE_COMPATIBLE_PARAMETERS
 #endif
 
 //==============================================================================
@@ -224,7 +228,7 @@
 // Audio plugin settings..
 
 #ifndef  JucePlugin_Build_VST
- #define JucePlugin_Build_VST              1
+ #define JucePlugin_Build_VST              0
 #endif
 #ifndef  JucePlugin_Build_VST3
  #define JucePlugin_Build_VST3             0
@@ -245,10 +249,10 @@
  #define JucePlugin_Build_STANDALONE       0
 #endif
 #ifndef  JucePlugin_Name
- #define JucePlugin_Name                   "adaptiveTappers"
+ #define JucePlugin_Name                   "Metro"
 #endif
 #ifndef  JucePlugin_Desc
- #define JucePlugin_Desc                   "adaptiveTappers"
+ #define JucePlugin_Desc                   "Metro"
 #endif
 #ifndef  JucePlugin_Manufacturer
  #define JucePlugin_Manufacturer           "RyanStables"
@@ -263,7 +267,7 @@
  #define JucePlugin_ManufacturerCode       0x52737462 // 'Rstb'
 #endif
 #ifndef  JucePlugin_PluginCode
- #define JucePlugin_PluginCode             0x52736174 // 'Rsat'
+ #define JucePlugin_PluginCode             0x536d7233 // 'Smr3'
 #endif
 #ifndef  JucePlugin_IsSynth
  #define JucePlugin_IsSynth                1
@@ -272,7 +276,7 @@
  #define JucePlugin_WantsMidiInput         1
 #endif
 #ifndef  JucePlugin_ProducesMidiOutput
- #define JucePlugin_ProducesMidiOutput     0
+ #define JucePlugin_ProducesMidiOutput     1
 #endif
 #ifndef  JucePlugin_IsMidiEffect
  #define JucePlugin_IsMidiEffect           0
@@ -302,16 +306,16 @@
  #define JucePlugin_AUSubType              JucePlugin_PluginCode
 #endif
 #ifndef  JucePlugin_AUExportPrefix
- #define JucePlugin_AUExportPrefix         adaptiveTappersAU
+ #define JucePlugin_AUExportPrefix         MetroAU
 #endif
 #ifndef  JucePlugin_AUExportPrefixQuoted
- #define JucePlugin_AUExportPrefixQuoted   "adaptiveTappersAU"
+ #define JucePlugin_AUExportPrefixQuoted   "MetroAU"
 #endif
 #ifndef  JucePlugin_AUManufacturerCode
  #define JucePlugin_AUManufacturerCode     JucePlugin_ManufacturerCode
 #endif
 #ifndef  JucePlugin_CFBundleIdentifier
- #define JucePlugin_CFBundleIdentifier     com.RyanStables.adaptiveTappers
+ #define JucePlugin_CFBundleIdentifier     com.ryanstables.Metro
 #endif
 #ifndef  JucePlugin_RTASCategory
  #define JucePlugin_RTASCategory           ePlugInCategory_SWGenerators
@@ -329,7 +333,7 @@
  #define JucePlugin_RTASDisableMultiMono   0
 #endif
 #ifndef  JucePlugin_AAXIdentifier
- #define JucePlugin_AAXIdentifier          com.yourcompany.adaptiveTappers
+ #define JucePlugin_AAXIdentifier          com.yourcompany.Metro
 #endif
 #ifndef  JucePlugin_AAXManufacturerCode
  #define JucePlugin_AAXManufacturerCode    JucePlugin_ManufacturerCode
@@ -346,5 +350,14 @@
 #ifndef  JucePlugin_AAXDisableMultiMono
  #define JucePlugin_AAXDisableMultiMono    0
 #endif
+#ifndef  JucePlugin_MaxNumInputChannels
+ #define JucePlugin_MaxNumInputChannels    1
+#endif
+#ifndef  JucePlugin_MaxNumOutputChannels
+ #define JucePlugin_MaxNumOutputChannels   1
+#endif
+#ifndef  JucePlugin_PreferredChannelConfigurations
+ #define JucePlugin_PreferredChannelConfigurations  {1,1}
+#endif
 
-#endif  // __JUCE_APPCONFIG_J0NIRJ__
+#endif  // __JUCE_APPCONFIG_SMR3JG__
