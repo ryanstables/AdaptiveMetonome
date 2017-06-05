@@ -59,10 +59,11 @@ public:
 private:
     
     // tappers...
-    int numSynthesizedTappers = 3;
-    ScopedPointer<TapGenerator> tapManager;
-    Counter globalCounter, frameCounter;
+    int numSynthesizedTappers    = 3;
+    int numInputTappers          = 1;
+    ScopedPointer<TapGenerator>  tapManager;
     bool tappersAlreadyAllocated = false;
+    Counter globalCounter, frameCounter;
     
     Synthesiser synth;
     AudioPlayHead::CurrentPositionInfo playhead;

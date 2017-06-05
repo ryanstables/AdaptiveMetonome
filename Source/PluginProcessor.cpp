@@ -102,7 +102,8 @@ void MetroAudioProcessor::prepareToPlay (double newSampleRate, int samplesPerBlo
     if(!tappersAlreadyAllocated) // only allocate the tappers once
     {
         // WTF?!?!?!?! Why does the samplesPerBlock tell me 1024, when it should be 128???
-        tapManager = new TapGenerator(numSynthesizedTappers, newSampleRate, /*samplesPerBlock*/ 128);
+        // this still needs to be fixed - how do we inherit the blocksize from the host?
+        tapManager = new TapGenerator(numSynthesizedTappers+1, newSampleRate, /*samplesPerBlock*/ 128);
         tappersAlreadyAllocated = true;
     }
     
@@ -128,6 +129,7 @@ bool MetroAudioProcessor::bpmValueChanged()
 //==============================================================================
 void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
 {
+ 
     // get bpm...
     getPlayHead()->getCurrentPosition(playhead);
     currentBPM = playhead.bpm;
@@ -139,9 +141,9 @@ void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& m
     getPlayHead()->getCurrentPosition(playhead);
     if (playhead.isPlaying)
     {
-//        Logger::outputDebugString("Frame: "+String(frameCounter.inSamples())+", playhead: "+String(playhead.timeInSamples));
         
         // if the playhead is moving, start tapping...
+        // Logger::outputDebugString("Frame: "+String(frameCounter.inSamples())+", playhead: "+String(playhead.timeInSamples));
         tapManager->nextBlock(midiMessages, globalCounter);
     }
     else

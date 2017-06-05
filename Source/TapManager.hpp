@@ -24,11 +24,14 @@
 // how to deal with human input tapper?
 // how to do the phase correction?
 // how to input midi notes?
+
 // ------- Todo
 // how do the tapper params get updated? do UI params need to passed into the tap generator?
 // how is the user-input tap handled? Is it considered to be another tapper?
 // how will perturbations be added using the LPC model?
 // how does the window of accpetance work in this case??
+// how can we correctly inherit the blocksize from the host?
+
 // ----------
 // why do 9 tappers get allocated when only 1 is used?
 // make sure the tapping params all get updated and calculated in the right place! 
@@ -80,7 +83,7 @@ public:
     void setChannel(int x){MIDIChannel=x;};
     int  getChannel(){return MIDIChannel;};
     
-    
+    // for onset transform...
     void setTKNoise(int x){TKNoiseMS=x;};
     int  getTKNoise(){return TKNoiseMS;};
     void setMNoise(int x){MNoise=x;};
@@ -88,7 +91,11 @@ public:
     void setInterval(int x){interval=x;};
     int  getInterval(){return interval;};
     int  getPrevOnset(){return prevOnsetTime.inSamples();};
+
+    void turnNoteOn(MidiBuffer&, int, Counter, bool);
+    void turnNoteOff(MidiBuffer&, int, Counter, bool);
     
+    void updateParameters(int ID, int channel, int freq, int noteLen, int interval, int velocity);
     
     // counter functions...
     void iterate(MidiBuffer&, int, Counter&, std::vector <bool>&);
@@ -99,8 +106,7 @@ private:
     void resetOffsetCounter() {offseCounter.reset();};
     bool requiresNoteOn(Counter);
     bool requiresNoteOff();
-    void turnNoteOn(MidiBuffer&, int);
-    void turnNoteOff(MidiBuffer&, int);
+    void printTapTime(Counter, String);
 
     
     int noteLen=0, MIDIChannel=1, tapperID=1,
@@ -135,11 +141,15 @@ public:
     void transform();
     bool allNotesHaveBeenTriggered();
     
+    void updateInputTapper(MidiBuffer&, Counter);
+    
 private:
     // tappers...
     int numSynthesizedTappers;
-    OwnedArray<Tapper>  tappers;
-    std::vector <bool> notesTriggered; // change this for an ownedArray?
+    OwnedArray<Tapper>  synthesizedTappers;
+    Tapper inputTapper;
+    
+    std::vector <bool> notesTriggered; // change these to ownedArrays or scopedPointers??
     std::vector <int> prevAsynch;
 
     // timer params...
