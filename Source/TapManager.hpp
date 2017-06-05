@@ -20,16 +20,11 @@
 // - Next steps: can the number of tappers be selected at run time by deleting and recreating the tap-manager?
 // - Also, can MIDI be fed in rather than static freqs?
 
-// problems...
-// how to deal with human input tapper?
-// how to do the phase correction?
-// how to input midi notes?
 
 // ------- Todo
-// how do the tapper params get updated? do UI params need to passed into the tap generator?
-// how is the user-input tap handled? Is it considered to be another tapper?
 // how will perturbations be added using the LPC model?
-// how does the window of accpetance work in this case??
+    // how does the window of accpetance work in this case??
+// how do the tapper params get updated? do UI params need to passed into the tap generator?
 // how can we correctly inherit the blocksize from the host?
 
 // ----------
@@ -151,7 +146,7 @@ private:
     
     std::vector <bool> notesTriggered; // change these to ownedArrays or scopedPointers??
     std::vector <int> prevAsynch;
-
+    
     // timer params...
     int TKInterval = 22050; /*overwrite from host*/
     double  bpm = 120.f,    /*overwrite from host*/

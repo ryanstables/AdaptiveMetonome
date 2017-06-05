@@ -82,7 +82,8 @@ void Tapper::iterate(MidiBuffer & midiMessages, int sampleNum, Counter &globalCo
     {
         turnNoteOn(midiMessages, sampleNum, globalCounter, true);
         prevOnsetTime.set(globalCounter.inSamples());
-        notesTriggered[tapperID] = true; // this gets turned off by the tapManager when all notes have been triggered
+        notesTriggered[tapperID-1] = true;  // this gets turned off by the tapManager when all notes have been triggered
+                                            // thiis is i-1 as these are only synths and 0 is the input.
     }
     else if(requiresNoteOff())
     {
@@ -212,17 +213,21 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
         for(int tapperNum=0; tapperNum<numSynthesizedTappers; tapperNum++)
             synthesizedTappers[tapperNum]->iterate(midiMessages, sampleNum, globalCounter, notesTriggered);
         
+        // once all of the notes have been triggered...
         if(allNotesHaveBeenTriggered())
         {
             // recalculate intervals here once all notes from the current beat have been logged...
             Logger::outputDebugString("Beat: "+String(beatCounter.inSamples()));
+            
             transform(); // add pertubation to the onset times
+            
             for (int i=0; i<numSynthesizedTappers; i++)
             {
                 notesTriggered[i]=false; // reset the noteTriggered flags
             }
             beatCounter.iterate(); // count the beats
         }
+        
         globalCounter.iterate();
     }
 }
