@@ -85,7 +85,7 @@ public:
     int  getMNoise(){return MNoise;};
     void setInterval(int x){interval=x;};
     int  getInterval(){return interval;};
-    int  getPrevOnset(){return prevOnsetTime.inSamples();};
+    int  getOnsetTime(){return onsetTime.inSamples();};
 
     void turnNoteOn(MidiBuffer&, int, Counter, bool);
     void turnNoteOff(MidiBuffer&, int, Counter, bool);
@@ -108,7 +108,7 @@ private:
     tapperFreq=1, tapperVel=1, /*should both be assignable to MIDI*/
     interval=22050, beatDivision=2;            /*overwrite from host*/
     
-    Counter offseCounter, prevOnsetTime;
+    Counter offseCounter, onsetTime;
     int noteNumber=0;
 
     bool noteActive = false;
@@ -137,11 +137,14 @@ public:
     bool allNotesHaveBeenTriggered();
     
     void updateInputTapper(MidiBuffer&, Counter);
+    void resetTriggeredFlags();
+    void updateTapAcceptanceWindow();
     
 private:
     // tappers...
     int numSynthesizedTappers;
     OwnedArray<Tapper>  synthesizedTappers;
+    
     Tapper inputTapper;
     
     std::vector <bool> notesTriggered; // change these to ownedArrays or scopedPointers??
@@ -155,8 +158,15 @@ private:
     int     frameLen;       /*overwrite from host*/
 
     Random rand;
-    Counter beatCounter;
+    Counter beatCounter, numberOfInputTaps;
+    
+    // for calculating the moving window of acceptance...
+    std::vector <int> prevTapTimes;
+    int inputTapAcceptanceWindow, nextWindowThreshold=44100+10000; //SET THIS PROPERLY!!!
+    bool userInputDetected=false;
+    bool inputWindowExists();
 };
+
 
 
 

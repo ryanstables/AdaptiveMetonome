@@ -129,7 +129,7 @@ bool MetroAudioProcessor::bpmValueChanged()
 //==============================================================================
 void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
 {
- 
+
     // get bpm...
     getPlayHead()->getCurrentPosition(playhead);
     currentBPM = playhead.bpm;

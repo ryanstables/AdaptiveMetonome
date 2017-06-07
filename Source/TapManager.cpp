@@ -43,7 +43,7 @@ void Tapper::turnNoteOff(MidiBuffer &midiMessages, int sampleNo, Counter globalC
     // report thee noteOff time in samples...
     if(noteActive)
     {
-        printTapTime(globalCounter, "NoteOff");
+//        printTapTime(globalCounter, "NoteOff");
         midiMessages.addEvent(MidiMessage::noteOff (MIDIChannel, tapperFreq, (uint8)tapperVel), sampleNo);
         noteActive=false;
         resetOffsetCounter();
@@ -81,7 +81,7 @@ void Tapper::iterate(MidiBuffer & midiMessages, int sampleNum, Counter &globalCo
     if(requiresNoteOn(globalCounter))
     {
         turnNoteOn(midiMessages, sampleNum, globalCounter, true);
-        prevOnsetTime.set(globalCounter.inSamples());
+        onsetTime.set(globalCounter.inSamples());
         notesTriggered[tapperID-1] = true;  // this gets turned off by the tapManager when all notes have been triggered
                                             // thiis is i-1 as these are only synths and 0 is the input.
     }
@@ -93,6 +93,7 @@ void Tapper::iterate(MidiBuffer & midiMessages, int sampleNum, Counter &globalCo
     if(noteActive) // if note is turned on, start counting towards the noteOff...
         offseCounter.iterate();
 }
+
 
 void Tapper::updateParameters(int ID, int channel, int freq, int noteLen, int interval, int velocity)
 {
@@ -135,7 +136,10 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     for(int i=0; i<numSynthesizedTappers; i++)
     {   // init parameters for all synthesized tappers...
         notesTriggered.push_back(false);
+        
         prevAsynch.push_back(0);
+        prevTapTimes.push_back(0);
+        
         synthesizedTappers[i]->updateParameters(i+1 /*ID*/, i+2 /*channel*/, 60+(i*12) /*freq*/, 22050 /*noteLen*/, 44100 /*interval*/, 127 /*velocity*/);
     }
 }
@@ -145,11 +149,71 @@ TapGenerator::~TapGenerator()
 {
 }
 
+void TapGenerator::updateInputTapper(MidiBuffer &midiMessages, Counter globalCounter)
+{
+    // if the block has MIDI events in it...
+    if(!midiMessages.isEmpty())
+    {
+        // iterate through the events...
+        MidiBuffer::Iterator messages(midiMessages);
+        MidiMessage result;
+        int samplePos;
+        
+        // get all of the midi messages in the buffer...
+        while(messages.getNextEvent(result, samplePos))
+        {
+            if(result.isNoteOn() && inputTapper.getChannel() == result.getChannel())
+            {
+                inputTapper.turnNoteOn(midiMessages, samplePos, globalCounter, false);
+                userInputDetected = true; // tell the tapManager that a noteOn has been registered.
+                numberOfInputTaps.iterate(); // count the number of taps that have been logged
+            }
+            else if(result.isNoteOff() && inputTapper.getChannel() == result.getChannel())
+            {
+                inputTapper.turnNoteOff(midiMessages, samplePos, globalCounter, false);
+            }
+        }
+    }
+}
+
+void TapGenerator::updateTapAcceptanceWindow()
+{
+    //subtract mean of current beat times from mean of prev.
+    double currentMean=0, prevMean=0;
+    
+    for (int i=0; i<numSynthesizedTappers; i++)
+    {
+        currentMean+=(synthesizedTappers[i]->getOnsetTime()/(double)numSynthesizedTappers);
+        prevMean+=(prevTapTimes[i]/(double)numSynthesizedTappers);
+        
+        //assign current to prev tap times.
+        prevTapTimes[i] = synthesizedTappers[i]->getOnsetTime();
+    }
+    
+    inputTapAcceptanceWindow = currentMean-prevMean;
+    nextWindowThreshold = currentMean + inputTapAcceptanceWindow / 2;
+//    Logger::outputDebugString("curr: ["+String(currentMean)+"] + prev: ["+String(prevMean)+"] = mean: ["+String(inputTapAcceptanceWindow)+"]");
+    Logger::outputDebugString("next Thresh: "+String(nextWindowThreshold)+"\n");
+}
+
+
+
+void TapGenerator::resetTriggeredFlags()
+{
+    for (int i=0; i<numSynthesizedTappers; i++)
+    {
+        // reset the noteTriggered flags...
+        notesTriggered[i] = false;
+    }
+    // and reset the input detected flag...
+    userInputDetected = false;
+}
 
 bool TapGenerator::allNotesHaveBeenTriggered()
 {
     return std::all_of(notesTriggered.cbegin(), notesTriggered.cend(), [](bool i){ return i==true; });
 }
+
 
 void TapGenerator::updateBPM(double x)
 {
@@ -160,7 +224,7 @@ void TapGenerator::updateBPM(double x)
         synthesizedTappers[i]->setInterval(TKInterval);
         synthesizedTappers[i]->setNoteLen(TKInterval/beatDivision);
     }
-};
+}
 
 
 void TapGenerator::transform()
@@ -180,25 +244,16 @@ void TapGenerator::transform()
     }
 }
 
-void TapGenerator::updateInputTapper(MidiBuffer &midiMessages, Counter globalCounter)
+bool TapGenerator::inputWindowExists()
 {
-    // if the block has MIDI events in it...
-    if(!midiMessages.isEmpty())
-    {
-        // iterate through the events...
-        MidiBuffer::Iterator messages(midiMessages);
-        MidiMessage result;
-        int samplePos;
-
-        while(messages.getNextEvent(result, samplePos))
-        {
-            if(result.isNoteOn() && inputTapper.getChannel() == result.getChannel())
-                inputTapper.turnNoteOn(midiMessages, samplePos, globalCounter, false);
-            else if(result.isNoteOff() && inputTapper.getChannel() == result.getChannel())
-                inputTapper.turnNoteOff(midiMessages, samplePos, globalCounter, false);
-        }
-    }
+    if(beatCounter.inSamples() && inputTapAcceptanceWindow)
+        return true;
+    else
+        return false;
 }
+
+
+
 
 // run in each process bock to update the note on/offs...
 void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
@@ -206,31 +261,64 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
     //update the input tapper with incoming on/off messages...
     updateInputTapper(midiMessages, globalCounter);
     
-    // synthesize the other tappers...
+    // GLOBAL SAMPLE COUNTER LOOP --------------------------------------
     for (int sampleNum=0; sampleNum<frameLen; sampleNum++)
     {
         // iterate the synthesized tappers...
         for(int tapperNum=0; tapperNum<numSynthesizedTappers; tapperNum++)
             synthesizedTappers[tapperNum]->iterate(midiMessages, sampleNum, globalCounter, notesTriggered);
         
-        // once all of the notes have been triggered...
+        // BEAT COUNTER -------------------------------------------
         if(allNotesHaveBeenTriggered())
         {
-            // recalculate intervals here once all notes from the current beat have been logged...
-            Logger::outputDebugString("Beat: "+String(beatCounter.inSamples()));
+            // use beat counter to start from the second event?...
             
-            transform(); // add pertubation to the onset times
-            
-            for (int i=0; i<numSynthesizedTappers; i++)
+            if(userInputDetected) // this means all notes (incl a user input) have been logged here.
             {
-                notesTriggered[i]=false; // reset the noteTriggered flags
+                // DEBUG -----------
+                Logger::outputDebugString("Beat ["+String(beatCounter.inSamples())+"] user input found");
+                // -----------------
+                
+                // updateTapAcceptanceWindow(); // be careful - put this is the right place!
+                // calculate timing params for next event
+                // apply transform()
+                // reset the waitforthesh flag and resetTriggeredFlags();
+                beatCounter.iterate(); // count the beats
+                updateTapAcceptanceWindow();
+                resetTriggeredFlags();
             }
-            beatCounter.iterate(); // count the beats
+            else
+            {
+                if(globalCounter.inSamples() >= nextWindowThreshold)
+                {
+                    // DEBUG -----------
+                    Logger::outputDebugString("Beat ["+String(beatCounter.inSamples())+"] threshold reached");
+                    // -----------------
+                    
+                    // window thresh has been reached...
+                    updateTapAcceptanceWindow(); //<--- calculate the next window thresh here
+                    resetTriggeredFlags();
+                    beatCounter.iterate(); // count the beats
+                }
+                else
+                {
+                    //keep counting towards the thresh...
+
+                }
+            }
         }
+        
+            // Q: Deal with the first beat (no window params)?
+                        // set the initial window threshold to something realistic, iherit from bpm or just ignore beat 1?
+            // Q: how do i deal wit double taps? - only register a tap if the inputflag = false
+            // look into FIFO in JUCE.
+        
         
         globalCounter.iterate();
     }
 }
+
+
 
 
 // Kill the taps that get left on if the playhead stops whilst a note is active...
