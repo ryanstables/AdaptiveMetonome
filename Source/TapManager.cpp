@@ -144,15 +144,26 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     }
 }
 
-
 TapGenerator::~TapGenerator()
 {
 }
 
+
+void TapGenerator::reset()
+{
+    // reset all of the counters...
+    
+    // reset theTKinterval...
+    
+    // reset the tappers...
+
+}
+
+
 void TapGenerator::updateInputTapper(MidiBuffer &midiMessages, Counter globalCounter)
 {
-    // if the block has MIDI events in it...
-    if(!midiMessages.isEmpty())
+    // if the block has MIDI events in it and a note hasn't already been registered in this window...
+    if(!midiMessages.isEmpty() && !userInputDetected)
     {
         // iterate through the events...
         MidiBuffer::Iterator messages(midiMessages);
@@ -178,22 +189,31 @@ void TapGenerator::updateInputTapper(MidiBuffer &midiMessages, Counter globalCou
 
 void TapGenerator::updateTapAcceptanceWindow()
 {
-    //subtract mean of current beat times from mean of prev.
-    double currentMean=0, prevMean=0;
-    
-    for (int i=0; i<numSynthesizedTappers; i++)
+    if(beatCounter.inSamples())
     {
-        currentMean+=(synthesizedTappers[i]->getOnsetTime()/(double)numSynthesizedTappers);
-        prevMean+=(prevTapTimes[i]/(double)numSynthesizedTappers);
+        double currentMean=0, prevMean=0;
         
-        //assign current to prev tap times.
-        prevTapTimes[i] = synthesizedTappers[i]->getOnsetTime();
+        for (int i=0; i<numSynthesizedTappers; i++)
+        {
+            // find the mean of the current and prev tap times...
+            currentMean+=(synthesizedTappers[i]->getOnsetTime()/(double)numSynthesizedTappers);
+            prevMean+=(prevTapTimes[i]/(double)numSynthesizedTappers);
+            
+            //assign current to prev tap times.
+            prevTapTimes[i] = synthesizedTappers[i]->getOnsetTime();
+        }
+        
+        inputTapAcceptanceWindow = currentMean-prevMean;
+        nextWindowThreshold = currentMean + inputTapAcceptanceWindow / 2;
+    //    Logger::outputDebugString("curr: ["+String(currentMean)+"] + prev: ["+String(prevMean)+"] = mean: ["+String(inputTapAcceptanceWindow)+"]");
+        Logger::outputDebugString("Next Thresh: "+String(nextWindowThreshold)+"\n");
     }
-    
-    inputTapAcceptanceWindow = currentMean-prevMean;
-    nextWindowThreshold = currentMean + inputTapAcceptanceWindow / 2;
-//    Logger::outputDebugString("curr: ["+String(currentMean)+"] + prev: ["+String(prevMean)+"] = mean: ["+String(inputTapAcceptanceWindow)+"]");
-    Logger::outputDebugString("next Thresh: "+String(nextWindowThreshold)+"\n");
+    else
+    {
+        // this should only happen on the first beat.
+        nextWindowThreshold = TKInterval*1.5;
+        Logger::outputDebugString("Next Thresh: "+String(nextWindowThreshold)+"\n");
+    }
 }
 
 
@@ -244,17 +264,6 @@ void TapGenerator::transform()
     }
 }
 
-bool TapGenerator::inputWindowExists()
-{
-    if(beatCounter.inSamples() && inputTapAcceptanceWindow)
-        return true;
-    else
-        return false;
-}
-
-
-
-
 // run in each process bock to update the note on/offs...
 void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
 {
@@ -268,21 +277,15 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
         for(int tapperNum=0; tapperNum<numSynthesizedTappers; tapperNum++)
             synthesizedTappers[tapperNum]->iterate(midiMessages, sampleNum, globalCounter, notesTriggered);
         
+        
         // BEAT COUNTER -------------------------------------------
         if(allNotesHaveBeenTriggered())
         {
-            // use beat counter to start from the second event?...
-            
-            if(userInputDetected) // this means all notes (incl a user input) have been logged here.
+            if(userInputDetected)
             {
-                // DEBUG -----------
-                Logger::outputDebugString("Beat ["+String(beatCounter.inSamples())+"] user input found");
-                // -----------------
-                
-                // updateTapAcceptanceWindow(); // be careful - put this is the right place!
-                // calculate timing params for next event
-                // apply transform()
-                // reset the waitforthesh flag and resetTriggeredFlags();
+                // Recalculate timing params with all registered asynch values...
+                transform();
+                Logger::outputDebugString("Beat ["+String(beatCounter.inSamples())+"] user input ["+String(numberOfInputTaps.inSamples())+"] found");
                 beatCounter.iterate(); // count the beats
                 updateTapAcceptanceWindow();
                 resetTriggeredFlags();
@@ -291,26 +294,22 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
             {
                 if(globalCounter.inSamples() >= nextWindowThreshold)
                 {
-                    // DEBUG -----------
+                    // Recalculate timing params without the user input asnynch...
+
                     Logger::outputDebugString("Beat ["+String(beatCounter.inSamples())+"] threshold reached");
-                    // -----------------
-                    
-                    // window thresh has been reached...
                     updateTapAcceptanceWindow(); //<--- calculate the next window thresh here
                     resetTriggeredFlags();
                     beatCounter.iterate(); // count the beats
                 }
                 else
                 {
-                    //keep counting towards the thresh...
-
+                    //Counting towards the next beat threshold...
                 }
             }
         }
         
-            // Q: Deal with the first beat (no window params)?
-                        // set the initial window threshold to something realistic, iherit from bpm or just ignore beat 1?
             // Q: how do i deal wit double taps? - only register a tap if the inputflag = false
+            // should all counters reset when the DAW stos playing? - beatCounter needs to at least!
             // look into FIFO in JUCE.
         
         

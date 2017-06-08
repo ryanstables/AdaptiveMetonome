@@ -16,16 +16,16 @@
 // 0 - procesor has a global counter that gets passed into the tapGenerator
 // 1 - tapGenerator uses the counter to call the tappers
 // 2 - tapper manages the noteOn and noteOff messages
-//
-// - Next steps: can the number of tappers be selected at run time by deleting and recreating the tap-manager?
-// - Also, can MIDI be fed in rather than static freqs?
 
+// if there are more than 1 taps at a detected beat, only the first is chosen.
+// the LPC model only gets applied when there is a user input. 
 
 // ------- Todo
-// how will perturbations be added using the LPC model?
-    // how does the window of accpetance work in this case??
-// how do the tapper params get updated? do UI params need to passed into the tap generator?
+// implement the LPC model in the transform class
+// write the events to a file using json or XML
 // how can we correctly inherit the blocksize from the host?
+// make a UI, where the file path can be set and the tapper params can be adjusted and record can be turned on/off.
+// write a Matlab script to parse/analyse the output
 
 // ----------
 // why do 9 tappers get allocated when only 1 is used?
@@ -126,25 +126,28 @@ class TapGenerator
 public:
     TapGenerator(int, double, int);
     ~TapGenerator();
-    void updateBPM(double x); // used to get playhead Info into the tap generator
     
+    void updateBPM(double x); // used to get playhead Info into the tap generator
     void setFrameLen(int x){frameLen=x;};
     void setFs(int x){fs = x;};
     
     void nextBlock(MidiBuffer&, Counter&);
     void killActiveTappers(MidiBuffer&);
-    void transform();
     bool allNotesHaveBeenTriggered();
     
     void updateInputTapper(MidiBuffer&, Counter);
     void resetTriggeredFlags();
     void updateTapAcceptanceWindow();
+    void reset();
     
 private:
+    
+    // private fns...
+    void transform();
+    
     // tappers...
     int numSynthesizedTappers;
     OwnedArray<Tapper>  synthesizedTappers;
-    
     Tapper inputTapper;
     
     std::vector <bool> notesTriggered; // change these to ownedArrays or scopedPointers??
@@ -162,9 +165,8 @@ private:
     
     // for calculating the moving window of acceptance...
     std::vector <int> prevTapTimes;
-    int inputTapAcceptanceWindow, nextWindowThreshold=44100+10000; //SET THIS PROPERLY!!!
+    int inputTapAcceptanceWindow, nextWindowThreshold=TKInterval*1.5; //SET THIS PROPERLY!!!
     bool userInputDetected=false;
-    bool inputWindowExists();
 };
 
 
