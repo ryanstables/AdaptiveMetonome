@@ -29,6 +29,7 @@ void Tapper::turnNoteOn(MidiBuffer &midiMessages, int sampleNo, Counter globalCo
 {
     if(!noteActive)
     {
+        onsetTime.set(globalCounter.inSamples());
         // report the noteOn time in samples...
         printTapTime(globalCounter, "NoteOn");
         if(updateMidiInOutputBuffer) // this can be set to false so the input tapper doesn't write out midi messages
@@ -81,7 +82,6 @@ void Tapper::iterate(MidiBuffer & midiMessages, int sampleNum, Counter &globalCo
     if(requiresNoteOn(globalCounter))
     {
         turnNoteOn(midiMessages, sampleNum, globalCounter, true);
-        onsetTime.set(globalCounter.inSamples());
         notesTriggered[tapperID-1] = true;  // this gets turned off by the tapManager when all notes have been triggered
                                             // thiis is i-1 as these are only synths and 0 is the input.
     }
@@ -123,6 +123,14 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     fs = sampleRate;
     frameLen = samplesPerBlock;
     
+    // open the logfile/stream (this will be moved when i create a 'filename' text input)
+    Time time;
+    File logFile ("/Users/ryanstables/Desktop/log.txt");
+    logFile.appendText("%% ----------------------------\n%% Trial: "+time.getCurrentTime().toString(true, true));
+    logFile.appendText("fs = "+String(fs)+";\n");
+    logFile.appendText("numTappers = "+String(NumTappers)+";\n");
+    logFile.appendText("startingPitches = [NaN");
+    
     // allocate the tappers...
     for (int i=0; i<numSynthesizedTappers; i++)
     {
@@ -139,24 +147,29 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
         
         prevAsynch.push_back(0);
         prevTapTimes.push_back(0);
-        
-        synthesizedTappers[i]->updateParameters(i+1 /*ID*/, i+2 /*channel*/, 60+(i*12) /*freq*/, 22050 /*noteLen*/, 44100 /*interval*/, 127 /*velocity*/);
+        int pitch = 60+(i*12);
+        synthesizedTappers[i]->updateParameters(i+1 /*ID*/, i+2 /*channel*/, pitch /*freq*/, 22050 /*noteLen*/, 44100 /*interval*/, 127 /*velocity*/);
+        logFile.appendText(" "+String(pitch));
     }
+    
+    logFile.appendText("];\n");
+    logFile.appendText("x = [\n");
+    // to stream text to the log file whilst tapping...
+    captainsLog = new FileOutputStream (logFile);
 }
 
 TapGenerator::~TapGenerator()
 {
+    captainsLog->writeText("];\n%% ----------------------------\n\n", false, false);
+    captainsLog->flush();
 }
 
 
 void TapGenerator::reset()
 {
     // reset all of the counters...
-    
     // reset theTKinterval...
-    
     // reset the tappers...
-
 }
 
 
@@ -264,6 +277,28 @@ void TapGenerator::transform()
     }
 }
 
+void TapGenerator::logResults(String inputString)
+{
+    // write to terminal
+    Logger::outputDebugString(inputString);
+    
+    String inputOnsetTime = "NaN ";
+    
+    if (userInputDetected)
+        inputOnsetTime = String(inputTapper.getOnsetTime());
+    
+    captainsLog->writeText(inputOnsetTime, false, false);
+    for (int i=0; i<numSynthesizedTappers; i++)
+    {
+        captainsLog->writeText(" "+String(synthesizedTappers[i]->getOnsetTime()), false, false);
+    }
+    
+    captainsLog->writeText(";\n", false, false);
+    
+//    if(beatCounter.inSamples() % 3 == 0)
+//        captainsLog->flush();
+}
+
 // run in each process bock to update the note on/offs...
 void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
 {
@@ -285,7 +320,7 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
             {
                 // Recalculate timing params with all registered asynch values...
                 transform();
-                Logger::outputDebugString("Beat ["+String(beatCounter.inSamples())+"] user input ["+String(numberOfInputTaps.inSamples())+"] found");
+                logResults("Beat ["+String(beatCounter.inSamples())+"] user input ["+String(numberOfInputTaps.inSamples())+"] found");
                 beatCounter.iterate(); // count the beats
                 updateTapAcceptanceWindow();
                 resetTriggeredFlags();
@@ -295,8 +330,7 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
                 if(globalCounter.inSamples() >= nextWindowThreshold)
                 {
                     // Recalculate timing params without the user input asnynch...
-
-                    Logger::outputDebugString("Beat ["+String(beatCounter.inSamples())+"] threshold reached");
+                    logResults("Beat ["+String(beatCounter.inSamples())+"] threshold reached");
                     updateTapAcceptanceWindow(); //<--- calculate the next window thresh here
                     resetTriggeredFlags();
                     beatCounter.iterate(); // count the beats

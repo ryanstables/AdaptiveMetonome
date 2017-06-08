@@ -30,8 +30,6 @@ MetroAudioProcessor::MetroAudioProcessor()
     for (int i = numVoices; --i >= 0;)
         synth.addVoice (new SineWaveVoice());
     synth.addSound (new SineWaveSound());
-    
-    
 }
 
 MetroAudioProcessor::~MetroAudioProcessor()
@@ -106,7 +104,7 @@ void MetroAudioProcessor::prepareToPlay (double newSampleRate, int samplesPerBlo
         tapManager = new TapGenerator(numSynthesizedTappers+1, newSampleRate, /*samplesPerBlock*/ 128);
         tappersAlreadyAllocated = true;
     }
-    
+
     synth.setCurrentPlaybackSampleRate (newSampleRate);
 }
 
@@ -165,6 +163,8 @@ void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& m
 //==============================================================================
 void MetroAudioProcessor::releaseResources()
 {
+    // write everything that left to the flie...
+
     
 }
 

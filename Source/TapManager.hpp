@@ -22,7 +22,6 @@
 
 // ------- Todo
 // implement the LPC model in the transform class
-// write the events to a file using json or XML
 // how can we correctly inherit the blocksize from the host?
 // make a UI, where the file path can be set and the tapper params can be adjusted and record can be turned on/off.
 // write a Matlab script to parse/analyse the output
@@ -144,6 +143,7 @@ private:
     
     // private fns...
     void transform();
+    void logResults(String);
     
     // tappers...
     int numSynthesizedTappers;
@@ -167,6 +167,8 @@ private:
     std::vector <int> prevTapTimes;
     int inputTapAcceptanceWindow, nextWindowThreshold=TKInterval*1.5; //SET THIS PROPERLY!!!
     bool userInputDetected=false;
+    
+    ScopedPointer<FileOutputStream> captainsLog; // for logging the results
 };
 
 
