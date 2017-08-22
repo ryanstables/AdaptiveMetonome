@@ -12,17 +12,18 @@
 //==============================================================================
 Tapper::Tapper()
 {
-    // some default values to be overwritten
-    TKNoiseMS = 25;     //25 ms timekeeper noise
-    MNoise    = 10;     //10 ms Motor noise
-    setNoteLen(256);
-    setVel(127);
-    setFreq(60);        // in MidiNotes
+    // some default values to be overwritten by either the tapGenerator or the editor...
+    TKNoiseStd      = 25;     // 25 ms timekeeper noise
+    MNoiseStd       = 10;     // 10 ms Motor noise
+    MNoisePrevValue = 0;      // no prev motor noise
+    setNoteLen(256);          // in samples
+    setVel(127);              // in MidiNotes
+    setFreq(60);              // ...
 }
 
 Tapper::~Tapper()
 {
-        // nothing to free up here
+        // nothing to free up here yet...
 }
 
 void Tapper::turnNoteOn(MidiBuffer &midiMessages, int sampleNo, Counter globalCounter, bool updateMidiInOutputBuffer)
@@ -137,6 +138,20 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
         synthesizedTappers.add(new Tapper);
     }
 
+    
+    // init alpha and [t(n-1,i)-t(n-1,j)]..
+    for (int i=0; i<NumTappers; i++)
+    {
+        alpha.add(new Array<double>);
+        asynch.add(new Array<double>);
+
+        for (int j=0; j<NumTappers; j++)
+        {
+            alpha[i]->add(0.f);
+            asynch[i]->add(0.f);
+        }
+    }
+    
     // init parameters of the input tapper...
     inputTapper.updateParameters(0 /*ID*/, 1 /*channel*/, 48 /*freq*/, 22050 /*noteLen*/, 44100 /*interval*/, 127 /*velocity*/);
 
@@ -160,6 +175,7 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
 
 TapGenerator::~TapGenerator()
 {
+    // Write to the the end of the file...
     captainsLog->writeText("];\n%% ----------------------------\n\n", false, false);
     captainsLog->flush();
 }
@@ -218,7 +234,6 @@ void TapGenerator::updateTapAcceptanceWindow()
         
         inputTapAcceptanceWindow = currentMean-prevMean;
         nextWindowThreshold = currentMean + inputTapAcceptanceWindow / 2;
-    //    Logger::outputDebugString("curr: ["+String(currentMean)+"] + prev: ["+String(prevMean)+"] = mean: ["+String(inputTapAcceptanceWindow)+"]");
         Logger::outputDebugString("Next Thresh: "+String(nextWindowThreshold)+"\n");
     }
     else
@@ -262,8 +277,43 @@ void TapGenerator::updateBPM(double x)
 
 void TapGenerator::transform()
 {
+/* TO BE IMPLEMENTED:
+    //temp tapper params
+    double TKNoiseStdInSamples, MNoiseInSamples, Tn, Mn, Hn;
+
+    for (int i=0; i<numSynthesizedTappers+1; i++) // remember to set input tapper seperately!!!
+    {
+        // generate the TK/M noise...
+        TKNoiseStdInSamples = (synthesizedTappers[i]->getTKNoiseStd()/1000.0)*fs;  // amount of randomness to be added
+        MNoiseInSamples = (synthesizedTappers[i]->getMNoiseStd()/1000.0)*fs;       // ... to the next intervals.
+        
+        Tn = TKInterval + rand.nextInt(TKNoiseStdInSamples); //check: does this generate positive gaussian nums???
+        Mn = rand.nextInt(MNoiseInSamples);                  // ... ???
+        Hn = (Tn+Mn) - synthesizedTappers[i]->getMNoisePrev();
+        synthesizedTappers[i]->setMNoisePrev(Mn); // remember to set input tapper seperately. 
+    }
+    
+    // populate the asynch matrix...
+    for (int i=0; i<numSynthesizedTappers+1; i++)
+    {
+        for (int j=0; j<numSynthesizedTappers+1; j++)
+        {
+            // add the input tapper first...
+            //...
+            //
+            // then...
+            asynch[i]->set(j, synthesizedTappers[i]->getOnsetTime() - synthesizedTappers[j]->getOnsetTime());
+        }
+    }
+    // calculate the timekeeper interval
+    // notes: remember to convert between ms and samples
+    // notes: remember to actually set/choose the noise params somewhere
+    // notes: first tapper is in a different array - first one needs to be processed differently in-loops
+*/
+
+    // old implementation: just uses randomness...
      int randWindowMs = 5;
-     int randWinInSamples = (randWindowMs/1000.0)*fs;                                    // amount of randomness to be added
+     int randWinInSamples = (randWindowMs/1000.0)*fs;  // amount of randomness to be added
     
     // return the interval with perturbation...
     for (int i=0; i<numSynthesizedTappers; i++)
@@ -285,7 +335,10 @@ void TapGenerator::logResults(String inputString)
     String inputOnsetTime = "NaN ";
     
     if (userInputDetected)
+    {
         inputOnsetTime = String(inputTapper.getOnsetTime());
+        
+    }
     
     captainsLog->writeText(inputOnsetTime, false, false);
     for (int i=0; i<numSynthesizedTappers; i++)
@@ -294,9 +347,7 @@ void TapGenerator::logResults(String inputString)
     }
     
     captainsLog->writeText(";\n", false, false);
-    
-//    if(beatCounter.inSamples() % 3 == 0)
-//        captainsLog->flush();
+      
 }
 
 // run in each process bock to update the note on/offs...
@@ -342,10 +393,9 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
             }
         }
         
-            // Q: how do i deal wit double taps? - only register a tap if the inputflag = false
-            // should all counters reset when the DAW stos playing? - beatCounter needs to at least!
+            // Q: how do i deal with double taps? - only register a tap if the inputflag = false
+            // should all counters reset when the DAW stops playing? - beatCounter needs to at least!
             // look into FIFO in JUCE.
-        
         
         globalCounter.iterate();
     }

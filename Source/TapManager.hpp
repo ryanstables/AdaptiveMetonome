@@ -16,7 +16,7 @@
 // 0 - procesor has a global counter that gets passed into the tapGenerator
 // 1 - tapGenerator uses the counter to call the tappers
 // 2 - tapper manages the noteOn and noteOff messages
-
+// Notes:
 // if there are more than 1 taps at a detected beat, only the first is chosen.
 // the LPC model only gets applied when there is a user input. 
 
@@ -78,10 +78,13 @@ public:
     int  getChannel(){return MIDIChannel;};
     
     // for onset transform...
-    void setTKNoise(int x){TKNoiseMS=x;};
-    int  getTKNoise(){return TKNoiseMS;};
-    void setMNoise(int x){MNoise=x;};
-    int  getMNoise(){return MNoise;};
+    void setTKNoiseStd(int x){TKNoiseStd=x;};
+    int  getTKNoiseStd(){return TKNoiseStd;};
+    void setMNoiseStd(int x){MNoiseStd=x;};
+    int  getMNoiseStd(){return MNoiseStd;};
+    void setMNoisePrev(int x){MNoisePrevValue=x;};
+    int  getMNoisePrev(){return MNoisePrevValue;};
+    
     void setInterval(int x){interval=x;};
     int  getInterval(){return interval;};
     int  getOnsetTime(){return onsetTime.inSamples();};
@@ -101,7 +104,6 @@ private:
     bool requiresNoteOn(Counter);
     bool requiresNoteOff();
     void printTapTime(Counter, String);
-
     
     int noteLen=0, MIDIChannel=1, tapperID=1,
     tapperFreq=1, tapperVel=1, /*should both be assignable to MIDI*/
@@ -112,7 +114,7 @@ private:
 
     bool noteActive = false;
     // LPC params...
-    int TKNoiseMS, MNoise;
+    int TKNoiseStd, MNoiseStd, MNoisePrevValue;
 };
 
 
@@ -154,11 +156,12 @@ private:
     std::vector <int> prevAsynch;
     
     // timer params...
-    int TKInterval = 22050; /*overwrite from host*/
-    double  bpm = 120.f,    /*overwrite from host*/
-    fs  = 44100.f,          /*overwrite from host*/
-    beatDivision = 2.f;     /*overwrite using input param*/
-    int     frameLen;       /*overwrite from host*/
+    int     TKInterval   = 22050, /*overwrite these values from host*/
+            frameLen     = 1024;
+    double  bpm          = 120.f,
+            fs           = 44100.f,
+            beatDivision = 2.f;
+    OwnedArray<Array<double>> alpha, asynch;
 
     Random rand;
     Counter beatCounter, numberOfInputTaps;
@@ -170,7 +173,6 @@ private:
     
     ScopedPointer<FileOutputStream> captainsLog; // for logging the results
 };
-
 
 
 
