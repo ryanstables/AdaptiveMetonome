@@ -56,7 +56,14 @@ public:
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    void updateMIDIFile(String midiInput);
+    
 private:
+    
+    // MIDI Input Data...
+    File inputmidifile;
+    ScopedPointer<InputStream> MIDIData; // to HoldtheIncoming MIDI Data.
+    OwnedArray<MidiMessageSequence> inputMIDISeq;
     
     // tappers...
     int numSynthesizedTappers    = 3;

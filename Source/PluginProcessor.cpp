@@ -25,6 +25,15 @@ MetroAudioProcessor::MetroAudioProcessor()
                        )
 #endif
 {
+    
+    
+    
+    // read MIDI file into a stream...
+    updateMIDIFile("/Users/ryanstables/Desktop/haydn.mid");
+    // why do i only get the "MetaEvent" messages for this midi file?????
+    
+    
+    
     // init the synth...
     const int numVoices = 8;
     for (int i = numVoices; --i >= 0;)
@@ -37,6 +46,51 @@ MetroAudioProcessor::~MetroAudioProcessor()
 }
 
 //==============================================================================
+
+
+void MetroAudioProcessor::updateMIDIFile(String midiInputString)
+{
+
+    //clear buffers here.......
+    inputMIDISeq.clear();
+    //. .....
+    // ......
+    
+    
+    inputmidifile = midiInputString;
+    MIDIData = new FileInputStream (inputmidifile); //what happens when this is called more than once?
+    
+    // create a MIDIFile object from the stream...
+    MidiFile midiFileInput;
+    midiFileInput.readFrom(*MIDIData);
+    midiFileInput.convertTimestampTicksToSeconds();
+    
+    // Create a sequence of MidiMessages...
+    int TrackNum = 0;
+    int numTracks = midiFileInput.getNumTracks();
+    MidiMessageSequence::MidiEventHolder *tempEventHolder;
+    
+    for (int trackNum=0; trackNum<numTracks; trackNum++)
+    {
+        inputMIDISeq.add(new MidiMessageSequence);
+        inputMIDISeq[trackNum]->addSequence(*midiFileInput.getTrack(TrackNum), 0.00);
+        int numEvents = inputMIDISeq[trackNum]->getNumEvents();
+
+        for (int eventNum=0; eventNum<numEvents; eventNum++)
+        {
+            tempEventHolder = inputMIDISeq[trackNum]->getEventPointer(eventNum);
+//            if (tempEventHolder->message.isNoteOn())
+            Logger::outputDebugString(
+                                         "Track["+String(trackNum)+"], Event["+String(eventNum)+"], time: "
+                                          + String(inputMIDISeq[trackNum]->getEventTime(eventNum))
+                                          + ", type: "+tempEventHolder->message.getDescription());
+        }
+    }
+
+}
+
+
+
 const String MetroAudioProcessor::getName() const
 {
     return JucePlugin_Name;

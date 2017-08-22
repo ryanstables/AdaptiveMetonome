@@ -141,6 +141,7 @@ public:
     void updateTapAcceptanceWindow();
     void reset();
     
+    
 private:
     
     // private fns...
@@ -171,7 +172,7 @@ private:
     int inputTapAcceptanceWindow, nextWindowThreshold=TKInterval*1.5; //SET THIS PROPERLY!!!
     bool userInputDetected=false;
     
-    ScopedPointer<FileOutputStream> captainsLog; // for logging the results
+    ScopedPointer<FileOutputStream> captainsLog; // for logging the results    
 };
 
 
