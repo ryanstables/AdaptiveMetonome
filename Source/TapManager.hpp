@@ -21,10 +21,18 @@
 // the LPC model only gets applied when there is a user input. 
 
 // ------- Todo
-// implement the LPC model in the transform class
-// how can we correctly inherit the blocksize from the host?
-// make a UI, where the file path can be set and the tapper params can be adjusted and record can be turned on/off.
-// write a Matlab script to parse/analyse the output
+// 1 - implement the LPC model in the transform class
+//      - import alphas from csv file?
+// 2 - read taps from a MIDI file
+//      - correctly transfer the MIDI Data into a pitch list in the TapGenerator (need to use pointer to MidiSeq)
+//      - update the taps using the pitch list in the TapGenerator.next() routine
+//      - figure out what to do when there are no notes left
+//      - figure out what to do with non-aligned notes (maybe pre-filter the midi?)
+// 3 - properly configure the TapGenerator::reset() function
+// 4 - make a UI, where the file path can be set and the tapper params can be adjusted and record can be turned on/off.
+//      - add gain controls for each tapper
+// 5 - upgrade the whole system so everything runs off the imported MIDI file (incl. init tappers)
+//      - allow assignable input tappers (select channel to tap to)
 
 // ----------
 // why do 9 tappers get allocated when only 1 is used?
