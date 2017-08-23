@@ -171,6 +171,17 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     logFile.appendText("x = [\n");
     // to stream text to the log file whilst tapping...
     captainsLog = new FileOutputStream (logFile);
+    
+    
+    // TEMPORARY PITCH LIST...
+    for (int i=0; i<3; i++)
+    {
+        pitchList.add(new Array<double>);
+        for (int j=1; j<16; j++)
+        {
+            pitchList[i]->add(j*6);
+        }
+    }
 }
 
 TapGenerator::~TapGenerator()
@@ -387,7 +398,16 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
             // ... do this for the input tapper too
             // ...
             // ...
-            //            synthesizedTappers[tapperNum]->setFreq(/*........*/);
+            // seems like theres a problem with this, fix the way the pitch List is played here??!?!?!?
+            if(beatCounter.inSamples() < pitchList.size())
+            {
+                synthesizedTappers[tapperNum]->setFreq(pitchList[tapperNum]->getUnchecked(beatCounter.inSamples()));
+            }
+            else
+            {
+                synthesizedTappers[tapperNum]->setFreq(pitchList[tapperNum]->getLast());
+            }
+            
             synthesizedTappers[tapperNum]->iterate(midiMessages, sampleNum, globalCounter, notesTriggered);
         }
         

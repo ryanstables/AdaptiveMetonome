@@ -107,7 +107,6 @@ public:
     void kill(MidiBuffer&);
     
 private:
-
     void resetOffsetCounter() {offseCounter.reset();};
     bool requiresNoteOn(Counter);
     bool requiresNoteOff();
@@ -182,7 +181,8 @@ private:
     ScopedPointer<FileOutputStream> captainsLog; // for logging the results
     
     // list of Freqs to feed Tappers...
-    OwnedArray<Array<double>> pitchList;
+    OwnedArray<Array<double>> pitchList;    
+    
 };
 
 

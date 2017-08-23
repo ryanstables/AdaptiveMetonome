@@ -29,6 +29,7 @@ MetroAudioProcessor::MetroAudioProcessor()
     updateMIDIFile("/Users/ryanstables/Desktop/haydn.mid");
     printMIDIMessages();
     
+    
     // update the piches in the tapManager based on the midi file...
     // currently there is a problem with this that needs to be fixed?!
     // I need to pass a pointer to inputMIDISeq, but the some of the other things, like adding channels mess up
@@ -51,9 +52,10 @@ MetroAudioProcessor::~MetroAudioProcessor()
 //==============================================================================
 void MetroAudioProcessor::updateMIDIFile(String midiInputString)
 {
-    //clear MIDISeq buffer...
+    //clear MIDISeq buffers...
     for (int i=0; i<inputMIDISeq.size(); i++)
         inputMIDISeq[i]->clear();
+    inputMIDISeq.clear();
     
     // create input stream from file...
     inputmidifile = midiInputString;
