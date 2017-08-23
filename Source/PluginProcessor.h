@@ -56,14 +56,16 @@ public:
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    //==============================================================================
     void updateMIDIFile(String midiInput);
+    void printMIDIMessages();
+    void findAlignedMidiNotes();
     
 private:
     
     // MIDI Input Data...
     File inputmidifile;
-    ScopedPointer<InputStream> MIDIData; // to HoldtheIncoming MIDI Data.
-    OwnedArray<MidiMessageSequence> inputMIDISeq;
+    OwnedArray<MidiMessageSequence> inputMIDISeq; // <----- This needs to be a pointer in order to pass it to the TapManager
     
     // tappers...
     int numSynthesizedTappers    = 3;

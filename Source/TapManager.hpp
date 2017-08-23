@@ -140,10 +140,9 @@ public:
     void resetTriggeredFlags();
     void updateTapAcceptanceWindow();
     void reset();
-    
+    void readPitchListFromMidiSeq(OwnedArray<MidiMessageSequence> *inputMIDISeq);
     
 private:
-    
     // private fns...
     void transform();
     void logResults(String);
@@ -172,7 +171,10 @@ private:
     int inputTapAcceptanceWindow, nextWindowThreshold=TKInterval*1.5; //SET THIS PROPERLY!!!
     bool userInputDetected=false;
     
-    ScopedPointer<FileOutputStream> captainsLog; // for logging the results    
+    ScopedPointer<FileOutputStream> captainsLog; // for logging the results
+    
+    // list of Freqs to feed Tappers...
+    OwnedArray<Array<double>> pitchList;
 };
 
 

@@ -25,13 +25,14 @@ MetroAudioProcessor::MetroAudioProcessor()
                        )
 #endif
 {
-    
-    
-    
     // read MIDI file into a stream...
     updateMIDIFile("/Users/ryanstables/Desktop/haydn.mid");
-    // why do i only get the "MetaEvent" messages for this midi file?????
+    printMIDIMessages();
     
+    // update the piches in the tapManager based on the midi file...
+    // currently there is a problem with this that needs to be fixed?!
+    // I need to pass a pointer to inputMIDISeq, but the some of the other things, like adding channels mess up
+    // tapManager->readPitchListFromMidiSeq(inputMIDISeq);
     
     
     // init the synth...
@@ -43,52 +44,78 @@ MetroAudioProcessor::MetroAudioProcessor()
 
 MetroAudioProcessor::~MetroAudioProcessor()
 {
+    
+    
 }
 
 //==============================================================================
-
-
 void MetroAudioProcessor::updateMIDIFile(String midiInputString)
 {
-
-    //clear buffers here.......
-    inputMIDISeq.clear();
-    //. .....
-    // ......
+    //clear MIDISeq buffer...
+    for (int i=0; i<inputMIDISeq.size(); i++)
+        inputMIDISeq[i]->clear();
     
-    
+    // create input stream from file...
     inputmidifile = midiInputString;
-    MIDIData = new FileInputStream (inputmidifile); //what happens when this is called more than once?
+    FileInputStream MIDIData(inputmidifile);
     
     // create a MIDIFile object from the stream...
     MidiFile midiFileInput;
-    midiFileInput.readFrom(*MIDIData);
-    midiFileInput.convertTimestampTicksToSeconds();
+    midiFileInput.readFrom(MIDIData);
     
     // Create a sequence of MidiMessages...
-    int TrackNum = 0;
     int numTracks = midiFileInput.getNumTracks();
-    MidiMessageSequence::MidiEventHolder *tempEventHolder;
-    
+    int activeTracknum = 0;
     for (int trackNum=0; trackNum<numTracks; trackNum++)
     {
-        inputMIDISeq.add(new MidiMessageSequence);
-        inputMIDISeq[trackNum]->addSequence(*midiFileInput.getTrack(TrackNum), 0.00);
-        int numEvents = inputMIDISeq[trackNum]->getNumEvents();
-
-        for (int eventNum=0; eventNum<numEvents; eventNum++)
+        // iterate midimessages to check for noteOns...
+        MidiMessageSequence currentTrack = *midiFileInput.getTrack(trackNum);
+        int trackContainsNoteOnMessages = 0;
+        for (int eventNum=0; eventNum<currentTrack.getNumEvents(); eventNum++)
         {
-            tempEventHolder = inputMIDISeq[trackNum]->getEventPointer(eventNum);
-//            if (tempEventHolder->message.isNoteOn())
-            Logger::outputDebugString(
-                                         "Track["+String(trackNum)+"], Event["+String(eventNum)+"], time: "
-                                          + String(inputMIDISeq[trackNum]->getEventTime(eventNum))
-                                          + ", type: "+tempEventHolder->message.getDescription());
+            if (currentTrack.getEventPointer(eventNum)->message.isNoteOn())
+            {
+                trackContainsNoteOnMessages++;
+            }
+        }
+        
+        // add the tracks to the inputMIDISeq array
+        if(trackContainsNoteOnMessages)
+        {
+            inputMIDISeq.add(new MidiMessageSequence);
+            inputMIDISeq[activeTracknum]->addSequence(currentTrack, 0.00);
+            activeTracknum++;
         }
     }
-
 }
 
+
+void MetroAudioProcessor::printMIDIMessages()
+{
+    Logger::outputDebugString("File: "+inputmidifile.getFileName()+"..............");
+    
+    int numTracks = inputMIDISeq.size();
+    for (int trackNum=0; trackNum < numTracks; trackNum++)
+    {
+        int activeNoteCounter = 0;
+        int numEvents = inputMIDISeq[trackNum]->getNumEvents();
+        for (int eventNum=0; eventNum<numEvents; eventNum++)
+        {
+            MidiMessageSequence::MidiEventHolder *tempEventHolder = inputMIDISeq[trackNum]->getEventPointer(eventNum);
+            if(tempEventHolder->message.isNoteOn())
+            {
+                Logger::outputDebugString("x{"+String(trackNum+1)+"}("+String(activeNoteCounter+1)+") = "+String(inputMIDISeq[trackNum]->getEventTime(eventNum)));
+                activeNoteCounter++;
+            }
+        }
+    }
+}
+
+void MetroAudioProcessor::findAlignedMidiNotes()
+{
+    //only keep the midiMessages with N players performing simultaneously...
+    
+}
 
 
 const String MetroAudioProcessor::getName() const

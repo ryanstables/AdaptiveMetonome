@@ -188,6 +188,27 @@ void TapGenerator::reset()
     // reset the tappers...
 }
 
+void TapGenerator::readPitchListFromMidiSeq(OwnedArray<MidiMessageSequence> *inputMIDISeq)
+{
+//    int numTracks = inputMIDISeq.size();
+//    
+//    for (int trackNum=0; trackNum < numTracks; trackNum++)
+//    {
+//        pitchList.add(new Array<double>);
+//        int activeNoteCounter = 0;
+//        int numEvents = inputMIDISeq[trackNum]->getNumEvents();
+//        for (int eventNum=0; eventNum<numEvents; eventNum++)
+//        {
+//            MidiMessageSequence::MidiEventHolder *tempEventHolder = inputMIDISeq[trackNum]->getEventPointer(eventNum);
+//            if(tempEventHolder->message.isNoteOn())
+//            {
+//                double pitch = MidiMessage::getMidiNoteInHertz(tempEventHolder->message.getNoteNumber());
+//                pitchList[activeNoteCounter]->add(pitch);
+//                activeNoteCounter++;
+//            }
+//        }
+//    }
+}
 
 void TapGenerator::updateInputTapper(MidiBuffer &midiMessages, Counter globalCounter)
 {
@@ -361,7 +382,14 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
     {
         // iterate the synthesized tappers...
         for(int tapperNum=0; tapperNum<numSynthesizedTappers; tapperNum++)
+        {
+            // TODO: read from pitchList and play something else once no events are left
+            // ... do this for the input tapper too
+            // ...
+            // ...
+            //            synthesizedTappers[tapperNum]->setFreq(/*........*/);
             synthesizedTappers[tapperNum]->iterate(midiMessages, sampleNum, globalCounter, notesTriggered);
+        }
         
         
         // BEAT COUNTER -------------------------------------------
