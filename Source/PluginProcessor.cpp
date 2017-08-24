@@ -29,13 +29,6 @@ MetroAudioProcessor::MetroAudioProcessor()
     updateMIDIFile("/Users/ryanstables/Desktop/haydn.mid");
     printMIDIMessages();
     
-    
-    // update the piches in the tapManager based on the midi file...
-    // currently there is a problem with this that needs to be fixed?!
-    // I need to pass a pointer to inputMIDISeq, but the some of the other things, like adding channels mess up
-    // tapManager->readPitchListFromMidiSeq(inputMIDISeq);
-    
-    
     // init the synth...
     const int numVoices = 8;
     for (int i = numVoices; --i >= 0;)
@@ -188,6 +181,10 @@ void MetroAudioProcessor::prepareToPlay (double newSampleRate, int samplesPerBlo
         tappersAlreadyAllocated = true;
     }
 
+    // update the piches in the tapManager based on the midi file...
+    tapManager->readPitchListFromMidiSeq(inputMIDISeq);
+
+    // update sampleRate for synth...
     synth.setCurrentPlaybackSampleRate (newSampleRate);
 }
 

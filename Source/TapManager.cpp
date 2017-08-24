@@ -174,14 +174,14 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     
     
     // TEMPORARY PITCH LIST...
-    for (int i=0; i<3; i++)
-    {
-        pitchList.add(new Array<double>);
-        for (int j=1; j<16; j++)
-        {
-            pitchList[i]->add(j*6);
-        }
-    }
+//    for (int i=0; i<3; i++)
+//    {
+//        pitchList.add(new Array<double>);
+//        for (int j=1; j<16; j++)
+//        {
+//            pitchList[i]->add(j*6);
+//        }
+//    }
 }
 
 TapGenerator::~TapGenerator()
@@ -199,27 +199,39 @@ void TapGenerator::reset()
     // reset the tappers...
 }
 
-void TapGenerator::readPitchListFromMidiSeq(OwnedArray<MidiMessageSequence> *inputMIDISeq)
+void TapGenerator::readPitchListFromMidiSeq(const OwnedArray<MidiMessageSequence> &inputMIDISeq)
 {
-//    int numTracks = inputMIDISeq.size();
-//    
-//    for (int trackNum=0; trackNum < numTracks; trackNum++)
-//    {
-//        pitchList.add(new Array<double>);
-//        int activeNoteCounter = 0;
-//        int numEvents = inputMIDISeq[trackNum]->getNumEvents();
-//        for (int eventNum=0; eventNum<numEvents; eventNum++)
-//        {
-//            MidiMessageSequence::MidiEventHolder *tempEventHolder = inputMIDISeq[trackNum]->getEventPointer(eventNum);
-//            if(tempEventHolder->message.isNoteOn())
-//            {
-//                double pitch = MidiMessage::getMidiNoteInHertz(tempEventHolder->message.getNoteNumber());
-//                pitchList[activeNoteCounter]->add(pitch);
-//                activeNoteCounter++;
-//            }
-//        }
-//    }
+    int numTracks = inputMIDISeq.size();
+    
+    for (int trackNum=0; trackNum < numTracks; trackNum++)
+    {
+        pitchList.add(new Array<double>);
+        int numEvents = inputMIDISeq[trackNum]->getNumEvents();
+        for (int eventNum=0; eventNum<numEvents; eventNum++)
+        {
+            MidiMessageSequence::MidiEventHolder *tempEventHolder = inputMIDISeq[trackNum]->getEventPointer(eventNum);
+            
+            if(tempEventHolder->message.isNoteOn())
+            {
+                double pitch = tempEventHolder->message.getNoteNumber();
+                pitchList[trackNum]->add(pitch);
+            }
+        }
+    }
 }
+
+
+void TapGenerator::printPitchList()
+{
+    for (int i=0; i<pitchList.size(); i++)
+    {
+        for (int j=0; j<pitchList[i]->size(); j++)
+        {
+            Logger::outputDebugString("Pitch["+String(i)+","+String(j)+"]: "+ String(pitchList[i]->getUnchecked(j)));
+        }
+    }
+}
+
 
 void TapGenerator::updateInputTapper(MidiBuffer &midiMessages, Counter globalCounter)
 {
@@ -288,6 +300,7 @@ void TapGenerator::resetTriggeredFlags()
     // and reset the input detected flag...
     userInputDetected = false;
 }
+
 
 bool TapGenerator::allNotesHaveBeenTriggered()
 {
@@ -394,12 +407,13 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
         // iterate the synthesized tappers...
         for(int tapperNum=0; tapperNum<numSynthesizedTappers; tapperNum++)
         {
-            // TODO: read from pitchList and play something else once no events are left
-            // ... do this for the input tapper too
-            // ...
-            // ...
-            // seems like theres a problem with this, fix the way the pitch List is played here??!?!?!?
-            if(beatCounter.inSamples() < pitchList.size())
+            
+            // TODO:
+            // Input file can now be used to drive the synth
+            // ... but Some MIDInotes do note turn off? Why is this?
+            // ... aaaaarrrrrggggghhhhh!!!!
+            
+            if(beatCounter.inSamples() < pitchList[tapperNum]->size())
             {
                 synthesizedTappers[tapperNum]->setFreq(pitchList[tapperNum]->getUnchecked(beatCounter.inSamples()));
             }

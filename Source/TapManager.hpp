@@ -147,7 +147,9 @@ public:
     void resetTriggeredFlags();
     void updateTapAcceptanceWindow();
     void reset();
-    void readPitchListFromMidiSeq(OwnedArray<MidiMessageSequence> *inputMIDISeq);
+    
+    void readPitchListFromMidiSeq(const OwnedArray<MidiMessageSequence> &inputMIDISeq);
+    void printPitchList();
     
 private:
     // private fns...
