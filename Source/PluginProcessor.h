@@ -62,10 +62,9 @@ public:
     void findAlignedMidiNotes();
     
 private:
-    
     // MIDI Input Data...
     File inputmidifile;
-    OwnedArray<MidiMessageSequence> inputMIDISeq; // <----- This needs to be a pointer in order to pass it to the TapManager
+    OwnedArray<MidiMessageSequence> inputMIDISeq;
     
     // tappers...
     int numSynthesizedTappers    = 3;
