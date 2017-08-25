@@ -32,9 +32,12 @@ void Tapper::turnNoteOn(MidiBuffer &midiMessages, int sampleNo, Counter globalCo
     {
         onsetTime.set(globalCounter.inSamples());
         // report the noteOn time in samples...
-        printTapTime(globalCounter, "NoteOn");
+//        printTapTime(globalCounter, "NoteOn");
         if(updateMidiInOutputBuffer) // this can be set to false so the input tapper doesn't write out midi messages
+        {
             midiMessages.addEvent(MidiMessage::noteOn (MIDIChannel, tapperFreq, (uint8)tapperVel), sampleNo);
+
+        }
         noteActive=true;
         noteNumber++;
     }
@@ -45,8 +48,9 @@ void Tapper::turnNoteOff(MidiBuffer &midiMessages, int sampleNo, Counter globalC
     // report thee noteOff time in samples...
     if(noteActive)
     {
-//        printTapTime(globalCounter, "NoteOff");
-        midiMessages.addEvent(MidiMessage::noteOff (MIDIChannel, tapperFreq, (uint8)tapperVel), sampleNo);
+        if(updateMidiInOutputBuffer) // this can be set to false so the input tapper doesn't write out midi messages
+            midiMessages.addEvent(MidiMessage::noteOff (MIDIChannel, tapperFreq, (uint8)tapperVel), sampleNo);
+
         noteActive=false;
         resetOffsetCounter();
     }
@@ -171,17 +175,6 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     logFile.appendText("x = [\n");
     // to stream text to the log file whilst tapping...
     captainsLog = new FileOutputStream (logFile);
-    
-    
-    // TEMPORARY PITCH LIST...
-//    for (int i=0; i<3; i++)
-//    {
-//        pitchList.add(new Array<double>);
-//        for (int j=1; j<16; j++)
-//        {
-//            pitchList[i]->add(j*6);
-//        }
-//    }
 }
 
 TapGenerator::~TapGenerator()
@@ -408,14 +401,15 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
         for(int tapperNum=0; tapperNum<numSynthesizedTappers; tapperNum++)
         {
             
-            // TODO:
-            // Input file can now be used to drive the synth
-            // ... but Some MIDInotes do note turn off? Why is this?
-            // ... aaaaarrrrrggggghhhhh!!!!
+            // TODO: FIX THIS!
+            // ...
+            // ... The problem is that the noteOff doesn't correspond with the noteOn
+            // ... is the tapper's pitch being updated before it gets turned off?
+            // ... this is really stressful! 
             
             if(beatCounter.inSamples() < pitchList[tapperNum]->size())
             {
-                synthesizedTappers[tapperNum]->setFreq(pitchList[tapperNum]->getUnchecked(beatCounter.inSamples()));
+                synthesizedTappers[tapperNum]->setFreq(pitchList[tapperNum]->getUnchecked(synthesizedTappers[tapperNum]->noteNumber));
             }
             else
             {

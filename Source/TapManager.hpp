@@ -106,6 +106,8 @@ public:
     void iterate(MidiBuffer&, int, Counter&, std::vector <bool>&);
     void kill(MidiBuffer&);
     
+    int noteNumber=0;
+    
 private:
     void resetOffsetCounter() {offseCounter.reset();};
     bool requiresNoteOn(Counter);
@@ -117,7 +119,6 @@ private:
     interval=22050, beatDivision=2;            /*overwrite from host*/
     
     Counter offseCounter, onsetTime;
-    int noteNumber=0;
 
     bool noteActive = false;
     // LPC params...

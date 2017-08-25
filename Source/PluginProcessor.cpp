@@ -26,7 +26,7 @@ MetroAudioProcessor::MetroAudioProcessor()
 #endif
 {
     // read MIDI file into a stream...
-    updateMIDIFile("/Users/ryanstables/Desktop/haydn.mid");
+    updateMIDIFile("/Users/dmtlab/Documents/Repos/AdaptiveMetonome/Data/haydn.mid");
     printMIDIMessages();
     
     // init the synth...
@@ -207,6 +207,8 @@ bool MetroAudioProcessor::bpmValueChanged()
 //==============================================================================
 void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
 {
+    // ------------ check the notes ----------
+    
 
     // get bpm...
     getPlayHead()->getCurrentPosition(playhead);
@@ -232,6 +234,28 @@ void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& m
     
     // send the midi messages to the Synth...
     synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
+
+    
+    // ------------ check the notes ----------
+        if(!midiMessages.isEmpty())
+        {
+            // iterate through the events...
+            MidiBuffer::Iterator messages(midiMessages);
+            MidiMessage result;
+            int samplePos;
+            
+            // get all of the midi messages in the buffer...
+            while(messages.getNextEvent(result, samplePos))
+            {
+                if(result.isNoteOn())
+                    Logger::outputDebugString(result.getDescription());
+                else if (result.isNoteOff())
+                    Logger::outputDebugString(result.getDescription());
+            }
+        }
+    
+    
+
     
     // counter++
     frameCounter.iterate();
