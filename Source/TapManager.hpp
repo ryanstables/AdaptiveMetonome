@@ -12,17 +12,14 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include <vector>
 
-// tapping workflow...
-// 0 - procesor has a global counter that gets passed into the tapGenerator
-// 1 - tapGenerator uses the counter to call the tappers
-// 2 - tapper manages the noteOn and noteOff messages
-// Notes:
-// if there are more than 1 taps at a detected beat, only the first is chosen.
-// the LPC model only gets applied when there is a user input. 
-
 // ------- Todo
 // 0 - check the updateInputTapper Function as it was firing too many times in the process block!?!?!?!
-//    - turn the PrintNoteOn() flags back on once I've fixed the current problem. 
+//    - turn the PrintNoteOn() flags back on once I've fixed the current problem.
+//    - the input tapper needs to update the middibuffer now, but do the events in it need to be removed first?
+//    - do some checks to make sure the midi file and numtappers is aligned, or just read numTapers from file.
+//    - currently, the input tapper has to have a note off before the next note on, or it will not update!?
+//    - how can the input/synth pitches be aligned, currently if a note is missed everything is out of sync?
+
 // 1 - implement the LPC model in the transform class
 //      - import alphas from csv file?
 // 2 - read taps from a MIDI file
@@ -37,9 +34,13 @@
 //      - allow assignable input tappers (select channel to tap to)
 
 // ----------
-// why do 9 tappers get allocated when only 1 is used?
-// make sure the tapping params all get updated and calculated in the right place! 
-
+// tapping workflow...
+// 0 - procesor has a global counter that gets passed into the tapGenerator
+// 1 - tapGenerator uses the counter to call the tappers
+// 2 - tapper manages the noteOn and noteOff messages
+// Notes:
+// if there are more than 1 taps at a detected beat, only the first is chosen.
+// the LPC model only gets applied when there is a user input.
 
 //==============================================================================
 //========= Counter ============================================================

@@ -36,7 +36,6 @@ void Tapper::turnNoteOn(MidiBuffer &midiMessages, int sampleNo, Counter globalCo
         if(updateMidiInOutputBuffer) // this can be set to false so the input tapper doesn't write out midi messages
         {
             midiMessages.addEvent(MidiMessage::noteOn (MIDIChannel, tapperFreq, (uint8)tapperVel), sampleNo);
-
         }
         noteActive=true;
         numberOfNoteOns.iterate(); //update the number of NoteOffs to have happened to this tapper
@@ -238,10 +237,15 @@ void TapGenerator::updateInputTapper(MidiBuffer &midiMessages, Counter globalCou
         int samplePos;
         
         // get all of the midi messages in the buffer...
-        while(messages.getNextEvent(result, samplePos)) //CHECK THIS LINE!!!!!!?!?!?!?!?!?!?!?!?
+        while(messages.getNextEvent(result, samplePos))
         {
             if(result.isNoteOn() && inputTapper.getChannel() == result.getChannel())
             {
+                int currentEventNum = inputTapper.numberOfNoteOffs.inSamples();
+
+                if(currentEventNum < pitchList[0]->size())
+                    inputTapper.setFreq(pitchList[0]->getUnchecked(currentEventNum));
+                
                 inputTapper.turnNoteOn(midiMessages, samplePos, globalCounter, false);
                 userInputDetected = true; // tell the tapManager that a noteOn has been registered.
                 numberOfInputTaps.iterate(); // count the number of taps that have been logged
@@ -396,13 +400,13 @@ void TapGenerator::updateTappersPitch(int tapperNum)
     int currentEventNum = synthesizedTappers[tapperNum]->numberOfNoteOffs.inSamples();
     
     // if the current event number is within the number of available pitches
-    if(currentEventNum < pitchList[tapperNum]->size())
+    if(currentEventNum < pitchList[tapperNum+1]->size())
     {
-        synthesizedTappers[tapperNum]->setFreq(pitchList[tapperNum]->getUnchecked(currentEventNum));
+        synthesizedTappers[tapperNum]->setFreq(pitchList[tapperNum+1]->getUnchecked(currentEventNum));
     }
     else
     {
-        synthesizedTappers[tapperNum]->setFreq(pitchList[tapperNum]->getLast());
+        synthesizedTappers[tapperNum]->setFreq(pitchList[tapperNum+1]->getLast());
     }
 }
 
