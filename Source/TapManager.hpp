@@ -21,6 +21,8 @@
 // the LPC model only gets applied when there is a user input. 
 
 // ------- Todo
+// 0 - check the updateInputTapper Function as it was firing too many times in the process block!?!?!?!
+//    - turn the PrintNoteOn() flags back on once I've fixed the current problem. 
 // 1 - implement the LPC model in the transform class
 //      - import alphas from csv file?
 // 2 - read taps from a MIDI file
@@ -106,7 +108,8 @@ public:
     void iterate(MidiBuffer&, int, Counter&, std::vector <bool>&);
     void kill(MidiBuffer&);
     
-    int noteNumber=0;
+    Counter numberOfNoteOns;
+    Counter numberOfNoteOffs;
     
 private:
     void resetOffsetCounter() {offseCounter.reset();};
@@ -149,8 +152,9 @@ public:
     void updateTapAcceptanceWindow();
     void reset();
     
-    void readPitchListFromMidiSeq(const OwnedArray<MidiMessageSequence> &inputMIDISeq);
+    void readPitchListFromMidiSeq(const OwnedArray<MidiMessageSequence>&);
     void printPitchList();
+    void updateTappersPitch(int);
     
 private:
     // private fns...

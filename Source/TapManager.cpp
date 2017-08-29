@@ -39,7 +39,7 @@ void Tapper::turnNoteOn(MidiBuffer &midiMessages, int sampleNo, Counter globalCo
 
         }
         noteActive=true;
-        noteNumber++;
+        numberOfNoteOns.iterate(); //update the number of NoteOffs to have happened to this tapper
     }
 }
 
@@ -53,6 +53,7 @@ void Tapper::turnNoteOff(MidiBuffer &midiMessages, int sampleNo, Counter globalC
 
         noteActive=false;
         resetOffsetCounter();
+        numberOfNoteOffs.iterate(); //update the number of NoteOffs to have happened to this tapper
     }
 }
 
@@ -237,7 +238,7 @@ void TapGenerator::updateInputTapper(MidiBuffer &midiMessages, Counter globalCou
         int samplePos;
         
         // get all of the midi messages in the buffer...
-        while(messages.getNextEvent(result, samplePos))
+        while(messages.getNextEvent(result, samplePos)) //CHECK THIS LINE!!!!!!?!?!?!?!?!?!?!?!?
         {
             if(result.isNoteOn() && inputTapper.getChannel() == result.getChannel())
             {
@@ -388,6 +389,23 @@ void TapGenerator::logResults(String inputString)
       
 }
 
+void TapGenerator::updateTappersPitch(int tapperNum)
+{
+    // the pitch of the tapper is determined by the number of NoteOffs
+    // this means a note off has to happen before the next noteOn or the pitch will not be updated
+    int currentEventNum = synthesizedTappers[tapperNum]->numberOfNoteOffs.inSamples();
+    
+    // if the current event number is within the number of available pitches
+    if(currentEventNum < pitchList[tapperNum]->size())
+    {
+        synthesizedTappers[tapperNum]->setFreq(pitchList[tapperNum]->getUnchecked(currentEventNum));
+    }
+    else
+    {
+        synthesizedTappers[tapperNum]->setFreq(pitchList[tapperNum]->getLast());
+    }
+}
+
 // run in each process bock to update the note on/offs...
 void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
 {
@@ -404,17 +422,7 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
             // TODO: FIX THIS!
             // ...
             // ... The problem is that the noteOff doesn't correspond with the noteOn
-            // ... is the tapper's pitch being updated before it gets turned off?
-            // ... this is really stressful! 
-            
-            if(beatCounter.inSamples() < pitchList[tapperNum]->size())
-            {
-                synthesizedTappers[tapperNum]->setFreq(pitchList[tapperNum]->getUnchecked(synthesizedTappers[tapperNum]->noteNumber));
-            }
-            else
-            {
-                synthesizedTappers[tapperNum]->setFreq(pitchList[tapperNum]->getLast());
-            }
+            updateTappersPitch(tapperNum);
             
             synthesizedTappers[tapperNum]->iterate(midiMessages, sampleNum, globalCounter, notesTriggered);
         }
