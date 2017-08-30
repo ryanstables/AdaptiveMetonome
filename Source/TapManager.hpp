@@ -137,7 +137,7 @@ private:
 class TapGenerator
 {
 public:
-    TapGenerator(int, double, int);
+    TapGenerator(int, double, int, String);
     ~TapGenerator();
     
     void updateBPM(double x); // used to get playhead Info into the tap generator
@@ -156,8 +156,10 @@ public:
     void readPitchListFromMidiSeq(const OwnedArray<MidiMessageSequence>&);
     void printPitchList();
     void updateTappersPitch(int);
+    void setLocalDataPath(String x){localDataPath = x;};
     
 private:
+    
     // private fns...
     void transform();
     void logResults(String);
@@ -189,7 +191,10 @@ private:
     ScopedPointer<FileOutputStream> captainsLog; // for logging the results
     
     // list of Freqs to feed Tappers...
-    OwnedArray<Array<double>> pitchList;    
+    OwnedArray<Array<double>> pitchList;
+    
+    // local data path...
+    String localDataPath; // to be fed into the constructor by the processor
     
 };
 

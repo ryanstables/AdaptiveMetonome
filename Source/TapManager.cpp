@@ -32,7 +32,7 @@ void Tapper::turnNoteOn(MidiBuffer &midiMessages, int sampleNo, Counter globalCo
     {
         onsetTime.set(globalCounter.inSamples());
         // report the noteOn time in samples...
-//        printTapTime(globalCounter, "NoteOn");
+        printTapTime(globalCounter, "NoteOn");
         if(updateMidiInOutputBuffer) // this can be set to false so the input tapper doesn't write out midi messages
         {
             midiMessages.addEvent(MidiMessage::noteOn (MIDIChannel, tapperFreq, (uint8)tapperVel), sampleNo);
@@ -121,8 +121,11 @@ void Tapper::printTapTime(Counter globalCounter, String eventType)
 //==============================================================================
 //========= Generator ==========================================================
 //==============================================================================
-TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBlock)
+TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBlock, String dataPath)
 {
+    
+    setLocalDataPath(dataPath);
+    
     // store number of tappers...
     numSynthesizedTappers = NumTappers-1;
     fs = sampleRate;
@@ -130,12 +133,12 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     
     // open the logfile/stream (this will be moved when i create a 'filename' text input)
     Time time;
-    File logFile ("/Users/ryanstables/Desktop/log.txt");
-    logFile.appendText("%% ----------------------------\n%% Trial: "+time.getCurrentTime().toString(true, true));
+    
+    File logFile (localDataPath+"log.txt");
+    logFile.appendText("%% ----------------------------\n%% Trial: "+time.getCurrentTime().toString(true, true)+"\n");
     logFile.appendText("fs = "+String(fs)+";\n");
     logFile.appendText("numTappers = "+String(NumTappers)+";\n");
-    logFile.appendText("startingPitches = [NaN");
-    
+        
     // allocate the tappers...
     for (int i=0; i<numSynthesizedTappers; i++)
     {

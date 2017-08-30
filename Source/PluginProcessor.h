@@ -61,6 +61,15 @@ public:
     void printMIDIMessages();
     void findAlignedMidiNotes();
     
+    
+    // This needs to be set to the right path by the user! I'll fix this in the next version.
+    // cuurently needs a foward slash on the end...
+    String LocalDataPath = "/Users/dmtlab/Documents/Repos/AdaptiveMetonome/Data/";
+    String midiFileName = "haydn.mid";
+    
+    // parameters for the gains...
+    AudioParameterInt *gainsParam;
+    
 private:
     // MIDI Input Data...
     File inputmidifile;
@@ -79,6 +88,9 @@ private:
     double currentBPM = 0, prevBPM = 0;
     
     bool bpmValueChanged();
+    
+    //parameters to pass to the TapManager (to be removed and inserted directly)
+    int gain1;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MetroAudioProcessor)

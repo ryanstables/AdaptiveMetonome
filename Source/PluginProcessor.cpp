@@ -26,14 +26,19 @@ MetroAudioProcessor::MetroAudioProcessor()
 #endif
 {
     // read MIDI file into a stream...
-    updateMIDIFile("/Users/dmtlab/Documents/Repos/AdaptiveMetonome/Data/haydn.mid");
-    printMIDIMessages();
+    updateMIDIFile(LocalDataPath+midiFileName);
+    //    printMIDIMessages();
     
     // init the synth...
     const int numVoices = 8;
     for (int i = numVoices; --i >= 0;)
         synth.addVoice (new SineWaveVoice());
     synth.addSound (new SineWaveSound());
+    
+    
+    // add the parameter...
+    addParameter(gainsParam = new AudioParameterInt("gain1", "Gain of tapper 1", 0, 127, 127));
+    
 }
 
 MetroAudioProcessor::~MetroAudioProcessor()
@@ -177,10 +182,10 @@ void MetroAudioProcessor::prepareToPlay (double newSampleRate, int samplesPerBlo
     {
         // WTF?!?!?!?! Why does the samplesPerBlock tell me 1024, when it should be 128???
         // this still needs to be fixed - how do we inherit the blocksize from the host?
-        tapManager = new TapGenerator(numSynthesizedTappers+1, newSampleRate, /*samplesPerBlock*/ 128);
+        tapManager = new TapGenerator(numSynthesizedTappers+1, newSampleRate, /*samplesPerBlock*/ 128, LocalDataPath);
         tappersAlreadyAllocated = true;
     }
-
+    
     // update the piches in the tapManager based on the midi file...
     tapManager->readPitchListFromMidiSeq(inputMIDISeq);
 
@@ -207,8 +212,8 @@ bool MetroAudioProcessor::bpmValueChanged()
 //==============================================================================
 void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
 {
-    // ------------ check the notes ----------
-    
+    //update params...
+    gain1 = *gainsParam;
 
     // get bpm...
     getPlayHead()->getCurrentPosition(playhead);
@@ -234,28 +239,6 @@ void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& m
     
     // send the midi messages to the Synth...
     synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
-
-    
-    // ------------ check the notes ----------
-        if(!midiMessages.isEmpty())
-        {
-            // iterate through the events...
-            MidiBuffer::Iterator messages(midiMessages);
-            MidiMessage result;
-            int samplePos;
-            
-            // get all of the midi messages in the buffer...
-            while(messages.getNextEvent(result, samplePos))
-            {
-                if(result.isNoteOn())
-                    Logger::outputDebugString(result.getDescription());
-                else if (result.isNoteOff())
-                    Logger::outputDebugString(result.getDescription());
-            }
-        }
-    
-    
-
     
     // counter++
     frameCounter.iterate();
