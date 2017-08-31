@@ -27,7 +27,7 @@ MetroAudioProcessorEditor::MetroAudioProcessorEditor (MetroAudioProcessor& p)
     
     slider1.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, false, sliderwidth, 20);
     slider1.setTextBoxIsEditable(true);
-    
+    slider1.addListener(this);
     
     // set the window size...
     setSize (width, height);
