@@ -16,18 +16,14 @@
 MetroAudioProcessorEditor::MetroAudioProcessorEditor (MetroAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p)
 {
-    int sliderwidth = 50;
-    
-    // init the velocity sliders...
-    addAndMakeVisible(slider1);
-    slider1.setRange(0.f, 127.f, 1.f);
-    slider1.setValue(127);
-    slider1.setBounds(10, 50, sliderwidth, height-80);
-    slider1.setSliderStyle(Slider::LinearVertical);
-    
-    slider1.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, false, sliderwidth, 20);
-    slider1.setTextBoxIsEditable(true);
-    slider1.addListener(this);
+    int xOffset = 10, yOffset = 50;
+
+    // input tapper vel...
+    addVelSlider(slider1, xOffset, yOffset);
+    // synth Tapper Vels...
+    addVelSlider(velTapper1, 10+xOffset+1*sliderwidth, yOffset);
+    addVelSlider(velTapper2, 20+xOffset+2*sliderwidth, yOffset);
+    addVelSlider(velTapper3, 30+xOffset+3*sliderwidth, yOffset);
     
     // set the window size...
     setSize (width, height);
@@ -40,20 +36,52 @@ MetroAudioProcessorEditor::~MetroAudioProcessorEditor()
 {
 }
 
+void MetroAudioProcessorEditor::addVelSlider(Slider &s, int xOffset, int yOffset)
+{
+    // init the velocity sliders...
+    addAndMakeVisible(s);
+    s.setRange(0.f, 127.f, 1.f);
+    s.setValue(127);
+    s.setBounds(xOffset, yOffset, sliderwidth, height-80);
+    s.setSliderStyle(Slider::LinearVertical);
+    
+    s.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, false, sliderwidth, 20);
+    s.setTextBoxIsEditable(true);
+    s.addListener(this);
+}
+
 
 void MetroAudioProcessorEditor::sliderValueChanged(Slider *s)
 {
     // update stuff based on the slider...
     if(s == &slider1)
     {
-        *processor.gainsParam = slider1.getValue();
+        processor.updateInputTapperVelocity(slider1.getValue());
+    }
+    else if(s == &velTapper1)
+    {
+        processor.updatedSynthTapperVelocity(0, velTapper1.getValue());
+    }
+    else if(s == &velTapper2)
+    {
+        processor.updatedSynthTapperVelocity(1, velTapper2.getValue());
+    }
+    else if(s == &velTapper3)
+    {
+        processor.updatedSynthTapperVelocity(2, velTapper3.getValue());
     }
 }
 
+
 void MetroAudioProcessorEditor::timerCallback()
 {
+    // input tapper vel...
     slider1.setValue(*processor.gainsParam, dontSendNotification);
+    velTapper1.setValue(*processor.velParam1, dontSendNotification);
+    velTapper2.setValue(*processor.velParam2, dontSendNotification);
+    velTapper3.setValue(*processor.velParam3, dontSendNotification);
 }
+
 
 //==============================================================================
 void MetroAudioProcessorEditor::paint (Graphics& g)

@@ -32,7 +32,9 @@ void Tapper::turnNoteOn(MidiBuffer &midiMessages, int sampleNo, Counter globalCo
     {
         onsetTime.set(globalCounter.inSamples());
         // report the noteOn time in samples...
-        printTapTime(globalCounter, "NoteOn");
+//        printTapTime(globalCounter, "NoteOn");
+//        Logger::outputDebugString("Tapper: "+String(tapperVel));
+
         if(updateMidiInOutputBuffer) // this can be set to false so the input tapper doesn't write out midi messages
         {
             midiMessages.addEvent(MidiMessage::noteOn (MIDIChannel, tapperFreq, (uint8)tapperVel), sampleNo);

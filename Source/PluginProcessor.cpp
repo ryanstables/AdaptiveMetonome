@@ -35,10 +35,11 @@ MetroAudioProcessor::MetroAudioProcessor()
         synth.addVoice (new SineWaveVoice());
     synth.addSound (new SineWaveSound());
     
-    
-    // add the parameter...
-    addParameter(gainsParam = new AudioParameterInt("gain1", "Gain of tapper 1", 0, 127, 127));
-    
+    // init inputTapper velocity parameter...
+    addParameter(gainsParam = new AudioParameterInt("inputVel", "Vel of input Tapper", 0, 127, 127));
+    addParameter(velParam1 = new AudioParameterInt("synthVel1", "Vel of synth Tapper 1", 0, 127, 127));
+    addParameter(velParam2 = new AudioParameterInt("synthVel2", "Vel of synth Tapper 2", 0, 127, 127));
+    addParameter(velParam3 = new AudioParameterInt("synthVel3", "Vel of synth Tapper 3", 0, 127, 127));
 }
 
 MetroAudioProcessor::~MetroAudioProcessor()
@@ -168,10 +169,51 @@ const String MetroAudioProcessor::getProgramName (int index)
 
 void MetroAudioProcessor::changeProgramName (int index, const String& newName)
 {
+
 }
 
 
+void MetroAudioProcessor::updateInputTapperVelocity(int vel)
+{
+    *gainsParam = vel;
+    
+    // check tapManager exists...
+    if(tappersAlreadyAllocated)
+    {
+        tapManager->inputTapper.setVel(*gainsParam);
+    }
+    
+    Logger::outputDebugString("Processor (input): "+String(*gainsParam));
+}
 
+
+void MetroAudioProcessor::updatedSynthTapperVelocity(int tapperNum, int vel)
+{
+    // this is stupid - figure out the loop method and implement it here!
+    if (tapperNum==0)
+    {
+        *velParam1 = vel;
+    }
+    else if (tapperNum==1)
+    {
+        *velParam2 = vel;
+    }
+    else if (tapperNum==2)
+    {
+        *velParam3 = vel;
+    }
+    
+    // check tapManager exists...
+    if(tappersAlreadyAllocated)
+    {
+        for (int  tapper = 0; tapper<numSynthesizedTappers; tapper++)
+        {
+            if (tapperNum==tapper)
+                tapManager->synthesizedTappers[tapper]->setVel(vel);
+        }
+    }
+    Logger::outputDebugString("Processor (synth"+String(tapperNum)+"): "+String(*gainsParam));
+}
 
 //==============================================================================
 //========= Prepare to Play ====================================================

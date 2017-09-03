@@ -38,7 +38,15 @@ private:
     MetroAudioProcessor& processor;
     int width = 500, height = 300;
 
-    Slider slider1; // change to an owned array
+    int sliderwidth = 50;
+
+    void addVelSlider(Slider &s, int xOffset, int yOffset);
+    
+    // sliders to control the velocities of the tappers...
+    // change to an owned array
+    Slider slider1, velTapper1, velTapper2, velTapper3;
+
+    int numSynthTappers;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MetroAudioProcessorEditor)
 };

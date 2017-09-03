@@ -158,6 +158,10 @@ public:
     void updateTappersPitch(int);
     void setLocalDataPath(String x){localDataPath = x;};
     
+    // public tappers so they can be easily updated by the processor/editor...
+    OwnedArray<Tapper>  synthesizedTappers;
+    Tapper inputTapper;
+    
 private:
     
     // private fns...
@@ -166,8 +170,6 @@ private:
     
     // tappers...
     int numSynthesizedTappers;
-    OwnedArray<Tapper>  synthesizedTappers;
-    Tapper inputTapper;
     
     std::vector <bool> notesTriggered; // change these to ownedArrays or scopedPointers??
     std::vector <int> prevAsynch;

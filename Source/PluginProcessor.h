@@ -68,7 +68,14 @@ public:
     String midiFileName = "haydn.mid";
     
     // parameters for the gains...
-    AudioParameterInt *gainsParam;
+    AudioParameterInt *gainsParam, *velParam1, *velParam2, *velParam3;
+    
+//    OwnedArray<AudioParameterInt> synthTapperVelParams;
+    
+    void updateInputTapperVelocity(int vel);
+    void updatedSynthTapperVelocity(int tapperNum, int vel);
+    
+    int getNumTappers(){return numSynthesizedTappers;};
     
 private:
     // MIDI Input Data...
