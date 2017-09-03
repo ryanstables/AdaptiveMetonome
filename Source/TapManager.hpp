@@ -13,8 +13,15 @@
 #include <vector>
 
 // ------- Todo
-// 0 - check the updateInputTapper Function as it was firing too many times in the process block!?!?!?!
-//    - turn the PrintNoteOn() flags back on once I've fixed the current problem.
+//
+// 1 - get the transformLPC() fn working,
+// 2 - read input tapper notes from file
+// 4 - load MIDI file from GUI
+// 5 - make sure everything resets and write out when the playhead stops
+// 6 - crop the midi file!
+// ...
+// ...
+// ...
 //    - the input tapper needs to update the middibuffer now, but do the events in it need to be removed first?
 //    - do some checks to make sure the midi file and numtappers is aligned, or just read numTapers from file.
 //    - currently, the input tapper has to have a note off before the next note on, or it will not update!?
@@ -22,11 +29,7 @@
 
 // 1 - implement the LPC model in the transform class
 //      - import alphas from csv file?
-// 2 - read taps from a MIDI file
-//      - correctly transfer the MIDI Data into a pitch list in the TapGenerator (need to use pointer to MidiSeq)
-//      - update the taps using the pitch list in the TapGenerator.next() routine
-//      - figure out what to do when there are no notes left
-//      - figure out what to do with non-aligned notes (maybe pre-filter the midi?)
+
 // 3 - properly configure the TapGenerator::reset() function
 // 4 - make a UI, where the file path can be set and the tapper params can be adjusted and record can be turned on/off.
 //      - add gain controls for each tapper
@@ -108,7 +111,7 @@ public:
     // counter functions...
     void iterate(MidiBuffer&, int, Counter&, std::vector <bool>&);
     void kill(MidiBuffer&);
-    
+    void reset();
     Counter numberOfNoteOns;
     Counter numberOfNoteOffs;
     
@@ -165,7 +168,8 @@ public:
 private:
     
     // private fns...
-    void transform();
+    void transformNoise();
+    void transformLPC();
     void logResults(String);
     
     // tappers...
@@ -198,6 +202,7 @@ private:
     // local data path...
     String localDataPath; // to be fed into the constructor by the processor
     
+    int trialNum = 1;
 };
 
 

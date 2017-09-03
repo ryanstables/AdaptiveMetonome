@@ -16,7 +16,6 @@
 MetroAudioProcessorEditor::MetroAudioProcessorEditor (MetroAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p)
 {
-    int xOffset = 10, yOffset = 50;
 
     // input tapper vel...
     addVelSlider(slider1, xOffset, yOffset);
@@ -89,8 +88,11 @@ void MetroAudioProcessorEditor::paint (Graphics& g)
     g.fillAll (Colours::white);
     String filePath = processor.LocalDataPath+processor.midiFileName;
     g.drawFittedText("MIDI: "+filePath, 10, 10, width-20, 30, Justification::left, 3);
-    
-    
+
+//    g.drawFittedText("v2", 10+xOffset+1*sliderwidth,  height-10, width-20, 30, Justification::left, 3);
+//    g.drawFittedText("vio", 20+xOffset+1*sliderwidth, height-10, width-20, 30, Justification::left, 3);
+//    g.drawFittedText("cel", 30+xOffset+1*sliderwidth, height-10, width-20, 30, Justification::left, 3);
+//    g.drawFittedText("cel", 30+xOffset+1*sliderwidth, height-10, width-20, 30, Justification::left, 3);
 }
 
 void MetroAudioProcessorEditor::resized()

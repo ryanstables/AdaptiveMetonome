@@ -266,12 +266,16 @@ void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& m
         tapManager->updateBPM(currentBPM);
     
     getPlayHead()->getCurrentPosition(playhead);
-    if (playhead.isPlaying)
+    thisBlockPlaying = playhead.isPlaying;
+    if (thisBlockPlaying)
     {
-        
         // if the playhead is moving, start tapping...
-        // Logger::outputDebugString("Frame: "+String(frameCounter.inSamples())+", playhead: "+String(playhead.timeInSamples));
         tapManager->nextBlock(midiMessages, globalCounter);
+    }
+    else if(!thisBlockPlaying && lastBlockPlaying)
+    {
+        // if the playhead just stopped moving, reset the tapManager...
+        tapManager->reset();
     }
     else
     {
@@ -284,6 +288,7 @@ void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& m
     
     // counter++
     frameCounter.iterate();
+    lastBlockPlaying = thisBlockPlaying;
 }
 
 

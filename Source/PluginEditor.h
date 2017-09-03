@@ -36,9 +36,7 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     MetroAudioProcessor& processor;
-    int width = 500, height = 300;
-
-    int sliderwidth = 50;
+    int width = 500, height = 300, xOffset = 10, yOffset = 50, sliderwidth = 50;
 
     void addVelSlider(Slider &s, int xOffset, int yOffset);
     

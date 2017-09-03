@@ -26,14 +26,31 @@ Tapper::~Tapper()
         // nothing to free up here yet...
 }
 
+
+void Tapper::reset()
+{
+    // reset to default vals...
+    TKNoiseStd      = 25;     // 25 ms timekeeper noise
+    MNoiseStd       = 10;     // 10 ms Motor noise
+    MNoisePrevValue = 0;      // no prev motor noise
+    setNoteLen(256);          // in samples
+    setVel(127);              // in MidiNotes
+    setFreq(60);              // ...
+
+    // reset all the counters...
+    offseCounter.reset();
+    onsetTime.reset();
+    numberOfNoteOns.reset();
+    numberOfNoteOffs.reset();
+}
+
 void Tapper::turnNoteOn(MidiBuffer &midiMessages, int sampleNo, Counter globalCounter, bool updateMidiInOutputBuffer)
 {
     if(!noteActive)
     {
         onsetTime.set(globalCounter.inSamples());
         // report the noteOn time in samples...
-//        printTapTime(globalCounter, "NoteOn");
-//        Logger::outputDebugString("Tapper: "+String(tapperVel));
+        printTapTime(globalCounter, "NoteOn");
 
         if(updateMidiInOutputBuffer) // this can be set to false so the input tapper doesn't write out midi messages
         {
@@ -137,7 +154,7 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     Time time;
     
     File logFile (localDataPath+"log.txt");
-    logFile.appendText("%% ----------------------------\n%% Trial: "+time.getCurrentTime().toString(true, true)+"\n");
+    logFile.appendText("%% ----------------------------\n%% "+time.getCurrentTime().toString(true, true)+"\n");
     logFile.appendText("fs = "+String(fs)+";\n");
     logFile.appendText("numTappers = "+String(NumTappers)+";\n");
         
@@ -173,10 +190,10 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
         prevTapTimes.push_back(0);
         int pitch = 60+(i*12);
         synthesizedTappers[i]->updateParameters(i+1 /*ID*/, i+2 /*channel*/, pitch /*freq*/, 22050 /*noteLen*/, 44100 /*interval*/, 127 /*velocity*/);
-        logFile.appendText(" "+String(pitch));
     }
     
-    logFile.appendText("];\n");
+
+    logFile.appendText("\n% Trial: "+String(trialNum)+"\n");
     logFile.appendText("x = [\n");
     // to stream text to the log file whilst tapping...
     captainsLog = new FileOutputStream (logFile);
@@ -193,8 +210,25 @@ TapGenerator::~TapGenerator()
 void TapGenerator::reset()
 {
     // reset all of the counters...
-    // reset theTKinterval...
+    beatCounter.reset();
+    numberOfInputTaps.reset();
+
+
     // reset the tappers...
+    // ... make sure to reset the numberOfNoteOffs/ons as this is what iterates the midi file!
+    for (int tapper=0; tapper<numSynthesizedTappers; tapper++)
+    {
+        synthesizedTappers[tapper]->reset();
+    }
+
+    // reset theTKinterval etc...
+    updateBPM(bpm);
+    
+    // Write to the the end of the file...
+    trialNum++;
+    captainsLog->writeText("];\n\n% Trial: "+String(trialNum)+"\nx=[\n", false, false);
+    captainsLog->flush();
+    
 }
 
 void TapGenerator::readPitchListFromMidiSeq(const OwnedArray<MidiMessageSequence> &inputMIDISeq)
@@ -322,43 +356,9 @@ void TapGenerator::updateBPM(double x)
     }
 }
 
-
-void TapGenerator::transform()
+// this function just uses noise to humanise the samples...
+void TapGenerator::transformNoise()
 {
-/* TO BE IMPLEMENTED:
-    //temp tapper params
-    double TKNoiseStdInSamples, MNoiseInSamples, Tn, Mn, Hn;
-
-    for (int i=0; i<numSynthesizedTappers+1; i++) // remember to set input tapper seperately!!!
-    {
-        // generate the TK/M noise...
-        TKNoiseStdInSamples = (synthesizedTappers[i]->getTKNoiseStd()/1000.0)*fs;  // amount of randomness to be added
-        MNoiseInSamples = (synthesizedTappers[i]->getMNoiseStd()/1000.0)*fs;       // ... to the next intervals.
-        
-        Tn = TKInterval + rand.nextInt(TKNoiseStdInSamples); //check: does this generate positive gaussian nums???
-        Mn = rand.nextInt(MNoiseInSamples);                  // ... ???
-        Hn = (Tn+Mn) - synthesizedTappers[i]->getMNoisePrev();
-        synthesizedTappers[i]->setMNoisePrev(Mn); // remember to set input tapper seperately. 
-    }
-    
-    // populate the asynch matrix...
-    for (int i=0; i<numSynthesizedTappers+1; i++)
-    {
-        for (int j=0; j<numSynthesizedTappers+1; j++)
-        {
-            // add the input tapper first...
-            //...
-            //
-            // then...
-            asynch[i]->set(j, synthesizedTappers[i]->getOnsetTime() - synthesizedTappers[j]->getOnsetTime());
-        }
-    }
-    // calculate the timekeeper interval
-    // notes: remember to convert between ms and samples
-    // notes: remember to actually set/choose the noise params somewhere
-    // notes: first tapper is in a different array - first one needs to be processed differently in-loops
-*/
-
     // old implementation: just uses randomness...
      int randWindowMs = 5;
      int randWinInSamples = (randWindowMs/1000.0)*fs;  // amount of randomness to be added
@@ -374,6 +374,43 @@ void TapGenerator::transform()
         prevAsynch[i] = randomValue;
     }
 }
+
+void TapGenerator::transformLPC()
+{
+     //temp tapper params
+     double TKNoiseStdInSamples, MNoiseInSamples, Tn, Mn, Hn;
+     
+     for (int i=0; i<numSynthesizedTappers+1; i++) // remember to set input tapper seperately!!!
+     {
+         // generate the TK/M noise...
+         TKNoiseStdInSamples = (synthesizedTappers[i]->getTKNoiseStd()/1000.0)*fs;  // amount of randomness to be added
+         MNoiseInSamples = (synthesizedTappers[i]->getMNoiseStd()/1000.0)*fs;       // ... to the next intervals.
+         
+         Tn = TKInterval + rand.nextInt(TKNoiseStdInSamples); //check: does this generate positive gaussian nums???
+         Mn = rand.nextInt(MNoiseInSamples);                  // ... ???
+         Hn = (Tn+Mn) - synthesizedTappers[i]->getMNoisePrev();
+         synthesizedTappers[i]->setMNoisePrev(Mn); // remember to set input tapper seperately.
+     }
+     
+     // populate the asynch matrix...
+     for (int i=0; i<numSynthesizedTappers+1; i++)
+     {
+         for (int j=0; j<numSynthesizedTappers+1; j++)
+         {
+             // add the input tapper first...
+             //...
+             //
+             // then...
+             asynch[i]->set(j, synthesizedTappers[i]->getOnsetTime() - synthesizedTappers[j]->getOnsetTime());
+         }
+     }
+     // calculate the timekeeper interval
+     // notes: remember to convert between ms and samples
+     // notes: remember to actually set/choose the noise params somewhere
+     // notes: first tapper is in a different array - first one needs to be processed differently in-loops
+
+}
+
 
 void TapGenerator::logResults(String inputString)
 {
@@ -400,18 +437,27 @@ void TapGenerator::logResults(String inputString)
 
 void TapGenerator::updateTappersPitch(int tapperNum)
 {
+    int numIntroBeeps = 4;
+    
     // the pitch of the tapper is determined by the number of NoteOffs
     // this means a note off has to happen before the next noteOn or the pitch will not be updated
     int currentEventNum = synthesizedTappers[tapperNum]->numberOfNoteOffs.inSamples();
     
     // if the current event number is within the number of available pitches
-    if(currentEventNum < pitchList[tapperNum+1]->size())
+    if(currentEventNum < numIntroBeeps)
     {
-        synthesizedTappers[tapperNum]->setFreq(pitchList[tapperNum+1]->getUnchecked(currentEventNum));
+        // intro - beeps at the same freq...
+        synthesizedTappers[tapperNum]->setFreq(84);
+    }
+    else if(currentEventNum > pitchList[tapperNum+1]->size())
+    {
+        // turn the tappers down if the MIDI file runs out...
+        synthesizedTappers[tapperNum]->setFreq(84);
+        synthesizedTappers[tapperNum]->setVel(0);
     }
     else
     {
-        synthesizedTappers[tapperNum]->setFreq(pitchList[tapperNum+1]->getLast());
+        synthesizedTappers[tapperNum]->setFreq(pitchList[tapperNum+1]->getUnchecked(currentEventNum-numIntroBeeps));
     }
 }
 
@@ -427,12 +473,7 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
         // iterate the synthesized tappers...
         for(int tapperNum=0; tapperNum<numSynthesizedTappers; tapperNum++)
         {
-            
-            // TODO: FIX THIS!
-            // ...
-            // ... The problem is that the noteOff doesn't correspond with the noteOn
             updateTappersPitch(tapperNum);
-            
             synthesizedTappers[tapperNum]->iterate(midiMessages, sampleNum, globalCounter, notesTriggered);
         }
         
@@ -443,7 +484,8 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
             if(userInputDetected)
             {
                 // Recalculate timing params with all registered asynch values...
-                transform();
+                // transformNoise();
+                // transformLPC();
                 logResults("Beat ["+String(beatCounter.inSamples())+"] user input ["+String(numberOfInputTaps.inSamples())+"] found");
                 beatCounter.iterate(); // count the beats
                 updateTapAcceptanceWindow();

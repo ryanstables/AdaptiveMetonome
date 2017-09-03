@@ -65,7 +65,7 @@ public:
     // This needs to be set to the right path by the user! I'll fix this in the next version.
     // cuurently needs a foward slash on the end...
     String LocalDataPath = "/Users/ryanstables/Documents/repos/adaptiveTappers/Data/";
-    String midiFileName = "haydn.mid";
+    String midiFileName = "haydn2.mid";
     
     // parameters for the gains...
     AudioParameterInt *gainsParam, *velParam1, *velParam2, *velParam3;
@@ -98,6 +98,9 @@ private:
     
     //parameters to pass to the TapManager (to be removed and inserted directly)
     int gain1;
+    
+    bool thisBlockPlaying = false,
+         lastBlockPlaying = false;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MetroAudioProcessor)
