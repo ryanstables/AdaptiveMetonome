@@ -15,10 +15,8 @@
 // ------- Todo
 //
 // 1 - get the transformLPC() fn working,
-// 2 - read input tapper notes from file
+// 2 - read input tapper notes from file (overwrite output buffer)
 // 4 - load MIDI file from GUI
-// 5 - make sure everything resets and write out when the playhead stops
-// 6 - crop the midi file!
 // ...
 // ...
 // ...

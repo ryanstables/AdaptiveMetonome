@@ -360,7 +360,7 @@ void TapGenerator::updateBPM(double x)
 void TapGenerator::transformNoise()
 {
     // old implementation: just uses randomness...
-     int randWindowMs = 5;
+     int randWindowMs = 2;
      int randWinInSamples = (randWindowMs/1000.0)*fs;  // amount of randomness to be added
     
     // return the interval with perturbation...

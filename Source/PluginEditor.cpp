@@ -86,13 +86,23 @@ void MetroAudioProcessorEditor::timerCallback()
 void MetroAudioProcessorEditor::paint (Graphics& g)
 {
     g.fillAll (Colours::white);
+    
+    // filename...
     String filePath = processor.LocalDataPath+processor.midiFileName;
     g.drawFittedText("MIDI: "+filePath, 10, 10, width-20, 30, Justification::left, 3);
+    
+    // instructions...
+    g.setFont(24.f);
+    g.setColour(Colours::red);
+    g.drawMultiLineText("Wait for 4 beeps, then start tapping along...", 100+xOffset+4*sliderwidth, 100, 150);
 
-//    g.drawFittedText("v2", 10+xOffset+1*sliderwidth,  height-10, width-20, 30, Justification::left, 3);
-//    g.drawFittedText("vio", 20+xOffset+1*sliderwidth, height-10, width-20, 30, Justification::left, 3);
-//    g.drawFittedText("cel", 30+xOffset+1*sliderwidth, height-10, width-20, 30, Justification::left, 3);
-//    g.drawFittedText("cel", 30+xOffset+1*sliderwidth, height-10, width-20, 30, Justification::left, 3);
+    // labels for vel faders...
+    g.setFont(15.f);
+    g.setColour(Colours::blue);
+    g.drawFittedText(	"v1",  xOffset, height-20, sliderwidth, 10, Justification::centred, 1, 0.0f);
+    g.drawFittedText(	"v2",  10+xOffset+1*sliderwidth, height-20, sliderwidth, 10, Justification::centred, 1, 0.0f);
+    g.drawFittedText(	"vio", 20+xOffset+2*sliderwidth, height-20, sliderwidth, 10, Justification::centred, 1, 0.0f);
+    g.drawFittedText(	"cel", 30+xOffset+3*sliderwidth, height-20, sliderwidth, 10, Justification::centred, 1, 0.0f);
 }
 
 void MetroAudioProcessorEditor::resized()
