@@ -20,6 +20,7 @@
 */
 class MetroAudioProcessorEditor  :  public AudioProcessorEditor,
                                     public Slider::Listener,
+                                    public Button::Listener,
                                     public Timer
 {
 public:
@@ -30,20 +31,23 @@ public:
     void paint (Graphics&) override;
     void resized() override;
     void sliderValueChanged(Slider *s) override;
+    void buttonClicked(Button *b) override;
     void timerCallback() override;
     
 private:
+    
+    void openMidiFile();
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     MetroAudioProcessor& processor;
     int width = 500, height = 300, xOffset = 10, yOffset = 50, sliderwidth = 50;
 
     void addVelSlider(Slider &s, int xOffset, int yOffset);
-    
+    void addButton(Button &b, int xOffset, int yOffset);
     // sliders to control the velocities of the tappers...
     // change to an owned array
     Slider slider1, velTapper1, velTapper2, velTapper3;
-
+    TextButton openButton;
     int numSynthTappers;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MetroAudioProcessorEditor)

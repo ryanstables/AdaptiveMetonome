@@ -24,6 +24,9 @@ MetroAudioProcessorEditor::MetroAudioProcessorEditor (MetroAudioProcessor& p)
     addVelSlider(velTapper2, 20+xOffset+2*sliderwidth, yOffset);
     addVelSlider(velTapper3, 30+xOffset+3*sliderwidth, yOffset);
     
+    //add the openFile button...
+    addButton(openButton, width-70, 50);
+    
     // set the window size...
     setSize (width, height);
     
@@ -49,6 +52,31 @@ void MetroAudioProcessorEditor::addVelSlider(Slider &s, int xOffset, int yOffset
     s.addListener(this);
 }
 
+
+void MetroAudioProcessorEditor::addButton(Button &b, int xOffset, int yOffset)
+{
+    addAndMakeVisible(b);
+    b.setButtonText("open...");
+    b.setColour (TextButton::buttonColourId, Colours::green);
+    b.setBounds(xOffset, yOffset, 50, 20);
+    b.addListener(this);
+}
+
+
+void MetroAudioProcessorEditor::openMidiFile()
+{
+    FileChooser chooser("Select a MIDI file...", File::nonexistent);
+    if(chooser.browseForFileToOpen())
+    {
+        File midiFile(chooser.getResult());        
+        processor.updateMIDIFile(midiFile.getFullPathName());
+    }
+}
+
+void MetroAudioProcessorEditor::buttonClicked(Button *b)
+{
+    if(b == &openButton) openMidiFile();
+}
 
 void MetroAudioProcessorEditor::sliderValueChanged(Slider *s)
 {
