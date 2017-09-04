@@ -462,10 +462,12 @@ void TapGenerator::updateTappersPitch(int tapperNum)
 }
 
 // run in each process bock to update the note on/offs...
-void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter)
+void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, int blockSize)
 {
     //update the input tapper with incoming on/off messages...
     updateInputTapper(midiMessages, globalCounter);
+    
+    frameLen = blockSize;
     
     // GLOBAL SAMPLE COUNTER LOOP --------------------------------------
     for (int sampleNum=0; sampleNum<frameLen; sampleNum++)

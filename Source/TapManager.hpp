@@ -54,7 +54,7 @@ public:
     // do some other stuff to the object...
     void iterate(){counter++;};
     void reset(){counter = 0;};
-    void set(long int x){counter = x;};
+    void set(int x){counter = x;};
     //return the counter in different formats...
     long int inSamples(){return counter;};
     double   inFrames(int frameLen){return (double)counter/(double)frameLen;};
@@ -62,7 +62,7 @@ public:
     double   inMilliseconds(double fs){return inSeconds(fs)*1000.0;};
     
 private:
-    long int counter=0;
+    int counter=0;
 };
 
 
@@ -145,18 +145,18 @@ public:
     void setFrameLen(int x){frameLen=x;};
     void setFs(int x){fs = x;};
     
-    void nextBlock(MidiBuffer&, Counter&);
-    void killActiveTappers(MidiBuffer&);
+    void nextBlock(MidiBuffer& midiMessages, Counter& globalCounter, int blockSize);
+    void killActiveTappers(MidiBuffer& midiMessages);
     bool allNotesHaveBeenTriggered();
     
-    void updateInputTapper(MidiBuffer&, Counter);
+    void updateInputTapper(MidiBuffer& midiMessages, Counter globalCounter);
     void resetTriggeredFlags();
     void updateTapAcceptanceWindow();
     void reset();
     
-    void readPitchListFromMidiSeq(const OwnedArray<MidiMessageSequence>&);
+    void readPitchListFromMidiSeq(const OwnedArray<MidiMessageSequence>& midiValuesFromFile);
     void printPitchList();
-    void updateTappersPitch(int);
+    void updateTappersPitch(int noteNum);
     void setLocalDataPath(String x){localDataPath = x;};
     
     // public tappers so they can be easily updated by the processor/editor...

@@ -87,7 +87,7 @@ private:
     int numInputTappers          = 1;
     ScopedPointer<TapGenerator>  tapManager;
     
-    bool tappersAlreadyAllocated = false;
+    bool tappersAlreadyAllocated = false, bpmAlreadyAllocated = false;
     Counter globalCounter, frameCounter;
     
     Synthesiser synth;

@@ -266,15 +266,20 @@ void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& m
     currentBPM = playhead.bpm;
     
     // do when plugin opens (we don't have access to an accurate bpm in prepareToPlay())
-    if(globalCounter.inSamples() == 0 || bpmValueChanged())
+    if( (globalCounter.inSamples() == 0 && !bpmAlreadyAllocated)|| bpmValueChanged())
+    {
+        bpmAlreadyAllocated = true;
         tapManager->updateBPM(currentBPM);
+        Logger::outputDebugString("global counter: "+String(globalCounter.inSamples()));
+        Logger::outputDebugString("BPM changed to: "+String(currentBPM));
+    }
     
-    getPlayHead()->getCurrentPosition(playhead);
     thisBlockPlaying = playhead.isPlaying;
     if (thisBlockPlaying)
     {
         // if the playhead is moving, start tapping...
-        tapManager->nextBlock(midiMessages, globalCounter);
+        int blockSize = buffer.getNumSamples();
+        tapManager->nextBlock(midiMessages, globalCounter, blockSize);
     }
     else if(!thisBlockPlaying && lastBlockPlaying)
     {
