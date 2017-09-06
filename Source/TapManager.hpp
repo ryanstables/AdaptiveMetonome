@@ -16,6 +16,7 @@
 //
 // 1 - get the transformLPC() fn working,
 // 2 - read input tapper notes from file (overwrite output buffer)
+// 3 - fix the repeated entry bug
 // 4 - load MIDI file from GUI
 // ...
 // ...
@@ -56,7 +57,7 @@ public:
     void reset(){counter = 0;};
     void set(int x){counter = x;};
     //return the counter in different formats...
-    long int inSamples(){return counter;};
+    int inSamples(){return counter;};
     double   inFrames(int frameLen){return (double)counter/(double)frameLen;};
     double   inSeconds(double fs){return (double)counter/fs;};
     double   inMilliseconds(double fs){return inSeconds(fs)*1000.0;};
@@ -114,7 +115,7 @@ public:
     Counter numberOfNoteOffs;
     
 private:
-    void resetOffsetCounter() {offseCounter.reset();};
+    void resetOffsetCounter() {countdownToOffset.reset();};
     bool requiresNoteOn(Counter);
     bool requiresNoteOff();
     void printTapTime(Counter, String);
@@ -123,7 +124,7 @@ private:
     tapperFreq=1, tapperVel=1, /*should both be assignable to MIDI*/
     interval=22050, beatDivision=2;            /*overwrite from host*/
     
-    Counter offseCounter, onsetTime;
+    Counter countdownToOffset, onsetTime;
 
     bool noteActive = false;
     // LPC params...

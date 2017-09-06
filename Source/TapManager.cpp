@@ -38,7 +38,7 @@ void Tapper::reset()
     setFreq(60);              // ...
 
     // reset all the counters...
-    offseCounter.reset();
+    countdownToOffset.reset();
     onsetTime.reset();
     numberOfNoteOns.reset();
     numberOfNoteOffs.reset();
@@ -94,7 +94,7 @@ bool Tapper::requiresNoteOn(Counter inputCounter)
 
 bool Tapper::requiresNoteOff()
 {
-    if (offseCounter.inSamples()>=noteLen && noteActive)
+    if (countdownToOffset.inSamples()>=noteLen && noteActive)
         return true;
     else
         return false;
@@ -115,7 +115,7 @@ void Tapper::iterate(MidiBuffer & midiMessages, int sampleNum, Counter &globalCo
     }
     
     if(noteActive) // if note is turned on, start counting towards the noteOff...
-        offseCounter.iterate();
+        countdownToOffset.iterate();
 }
 
 
@@ -267,8 +267,9 @@ void TapGenerator::printPitchList()
 
 void TapGenerator::updateInputTapper(MidiBuffer &midiMessages, Counter globalCounter)
 {
-    // if the block has MIDI events in it and a note hasn't already been registered in this window...
-    if(!midiMessages.isEmpty() && !userInputDetected)
+    // if the block has MIDI events in it
+    // and a note hasn't already been registered in this window...
+    if(!midiMessages.isEmpty() /*&& !userInputDetected*/)
     {
         // iterate through the events...
         MidiBuffer::Iterator messages(midiMessages);
@@ -278,18 +279,28 @@ void TapGenerator::updateInputTapper(MidiBuffer &midiMessages, Counter globalCou
         // get all of the midi messages in the buffer...
         while(messages.getNextEvent(result, samplePos))
         {
-            if(result.isNoteOn() && inputTapper.getChannel() == result.getChannel())
+            if(
+               result.isNoteOn() && // if the incoming event is a noteOn
+               inputTapper.getChannel() == result.getChannel() && // and it is from this channel
+               !userInputDetected // and no other noteOn event has been logged...
+               )
             {
+                // update pitch of input tapper...
                 int currentEventNum = inputTapper.numberOfNoteOffs.inSamples();
-
                 if(currentEventNum < pitchList[0]->size())
                     inputTapper.setFreq(pitchList[0]->getUnchecked(currentEventNum));
+                
+                // clear noteOn and replace with new pitch here...
                 
                 inputTapper.turnNoteOn(midiMessages, samplePos, globalCounter, false);
                 userInputDetected = true; // tell the tapManager that a noteOn has been registered.
                 numberOfInputTaps.iterate(); // count the number of taps that have been logged
             }
-            else if(result.isNoteOff() && inputTapper.getChannel() == result.getChannel())
+            else if(
+                    result.isNoteOff() && // if the incoming event is a noteOff
+                    inputTapper.getChannel() == result.getChannel() // and it is from this channel
+                    // but we don't care if a note has already been logged as this may cause noteOffs to be missed when the unserInputDetected flag is reset!
+                    )
             {
                 inputTapper.turnNoteOff(midiMessages, samplePos, globalCounter, false);
             }
@@ -335,7 +346,6 @@ void TapGenerator::resetTriggeredFlags()
         notesTriggered[i] = false;
     }
     // and reset the input detected flag...
-    userInputDetected = false;
 }
 
 
@@ -422,7 +432,6 @@ void TapGenerator::logResults(String inputString)
     if (userInputDetected)
     {
         inputOnsetTime = String(inputTapper.getOnsetTime());
-        
     }
     
     captainsLog->writeText(inputOnsetTime, false, false);
@@ -430,10 +439,9 @@ void TapGenerator::logResults(String inputString)
     {
         captainsLog->writeText(" "+String(synthesizedTappers[i]->getOnsetTime()), false, false);
     }
-    
     captainsLog->writeText(";\n", false, false);
-      
 }
+
 
 void TapGenerator::updateTappersPitch(int tapperNum)
 {
@@ -461,14 +469,19 @@ void TapGenerator::updateTappersPitch(int tapperNum)
     }
 }
 
-// run in each process bock to update the note on/offs...
+
+// ------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------
 void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, int blockSize)
 {
-    //update the input tapper with incoming on/off messages...
-    updateInputTapper(midiMessages, globalCounter);
     
+    // update block size from process block...
     frameLen = blockSize;
     
+    // update the input tapper with incoming on/off messages...
+    updateInputTapper(midiMessages, globalCounter);
+
     // GLOBAL SAMPLE COUNTER LOOP --------------------------------------
     for (int sampleNum=0; sampleNum<frameLen; sampleNum++)
     {
@@ -479,7 +492,6 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
             synthesizedTappers[tapperNum]->iterate(midiMessages, sampleNum, globalCounter, notesTriggered);
         }
         
-        
         // BEAT COUNTER -------------------------------------------
         if(allNotesHaveBeenTriggered())
         {
@@ -488,10 +500,11 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
                 // Recalculate timing params with all registered asynch values...
                 // transformNoise();
                 // transformLPC();
-                logResults("Beat ["+String(beatCounter.inSamples())+"] user input ["+String(numberOfInputTaps.inSamples())+"] found");
-                beatCounter.iterate(); // count the beats
+                logResults("Beat ["+String(beatCounter.inSamples())+"], user input ["+String(numberOfInputTaps.inSamples())+"] found");
+                beatCounter.iterate(); // count the number of registered beats
                 updateTapAcceptanceWindow();
                 resetTriggeredFlags();
+                userInputDetected = false;
             }
             else
             {
@@ -502,6 +515,7 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
                     updateTapAcceptanceWindow(); //<--- calculate the next window thresh here
                     resetTriggeredFlags();
                     beatCounter.iterate(); // count the beats
+                    userInputDetected = false; // this should already be false!
                 }
                 else
                 {

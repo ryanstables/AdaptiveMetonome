@@ -42,11 +42,13 @@ MetroAudioProcessor::MetroAudioProcessor()
     addParameter(velParam3 = new AudioParameterInt("synthVel3", "Vel of synth Tapper 3", 0, 127, 127));
 }
 
+
 MetroAudioProcessor::~MetroAudioProcessor()
 {
     
     
 }
+
 
 //==============================================================================
 void MetroAudioProcessor::updateMIDIFile(String midiInputString)
@@ -226,9 +228,7 @@ void MetroAudioProcessor::prepareToPlay (double newSampleRate, int samplesPerBlo
 {
     if(!tappersAlreadyAllocated) // only allocate the tappers once
     {
-        // WTF?!?!?!?! Why does the samplesPerBlock tell me 1024, when it should be 128???
-        // this still needs to be fixed - how do we inherit the blocksize from the host?
-        tapManager = new TapGenerator(numSynthesizedTappers+1, newSampleRate, /*samplesPerBlock*/ 128, LocalDataPath);
+        tapManager = new TapGenerator(numSynthesizedTappers+1, newSampleRate, samplesPerBlock, LocalDataPath);
         tappersAlreadyAllocated = true;
     }
     
