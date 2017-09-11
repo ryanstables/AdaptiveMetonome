@@ -17,8 +17,17 @@ MetroAudioProcessorEditor::MetroAudioProcessorEditor (MetroAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p)
 {
 
+    String filePath = processor.LocalDataPath+processor.midiFileName;
+
+    // file path label...
+    addAndMakeVisible(filePathLabel);
+    filePathLabel.setBounds(10, 10, width-20, 30);
+    filePathLabel.setText("MIDI: "+filePath, dontSendNotification);
+    
+    
     // input tapper vel...
     addVelSlider(slider1, xOffset, yOffset);
+    
     // synth Tapper Vels...
     addVelSlider(velTapper1, 10+xOffset+1*sliderwidth, yOffset);
     addVelSlider(velTapper2, 20+xOffset+2*sliderwidth, yOffset);
@@ -63,20 +72,30 @@ void MetroAudioProcessorEditor::addButton(Button &b, int xOffset, int yOffset)
 }
 
 
+
 void MetroAudioProcessorEditor::openMidiFile()
 {
     FileChooser chooser("Select a MIDI file...", File::nonexistent);
     if(chooser.browseForFileToOpen())
     {
-        File midiFile(chooser.getResult());        
+        // load file chooser and update processor...
+        File midiFile(chooser.getResult());
         processor.updateMIDIFile(midiFile.getFullPathName());
+        
+        //update the label on the UI...
+        filePathLabel.setText("MIDI: "+midiFile.getFullPathName(), dontSendNotification);
     }
 }
 
+
 void MetroAudioProcessorEditor::buttonClicked(Button *b)
 {
-    if(b == &openButton) openMidiFile();
+    if(b == &openButton)
+    {
+     openMidiFile();
+    }
 }
+
 
 void MetroAudioProcessorEditor::sliderValueChanged(Slider *s)
 {
@@ -116,8 +135,8 @@ void MetroAudioProcessorEditor::paint (Graphics& g)
     g.fillAll (Colours::white);
     
     // filename...
-    String filePath = processor.LocalDataPath+processor.midiFileName;
-    g.drawFittedText("MIDI: "+filePath, 10, 10, width-20, 30, Justification::left, 3);
+//    String filePath = processor.LocalDataPath+processor.midiFileName;
+//    g.drawFittedText("MIDI: "+filePath, 10, 10, width-20, 30, Justification::left, 3);
     
     // instructions...
     g.setFont(24.f);

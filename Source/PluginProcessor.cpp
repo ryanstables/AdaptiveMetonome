@@ -45,8 +45,6 @@ MetroAudioProcessor::MetroAudioProcessor()
 
 MetroAudioProcessor::~MetroAudioProcessor()
 {
-    
-    
 }
 
 
@@ -58,7 +56,7 @@ void MetroAudioProcessor::updateMIDIFile(String midiInputString)
         inputMIDISeq[i]->clear();
     inputMIDISeq.clear();
     
-    Logger::outputDebugString("in Processor: "+midiInputString);
+    Logger::outputDebugString("in Processor: "+midiInputString+" has been loaded");
     
     // create input stream from file...
     inputmidifile = midiInputString;

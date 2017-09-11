@@ -44,11 +44,15 @@ private:
 
     void addVelSlider(Slider &s, int xOffset, int yOffset);
     void addButton(Button &b, int xOffset, int yOffset);
+
+
     // sliders to control the velocities of the tappers...
     // change to an owned array
     Slider slider1, velTapper1, velTapper2, velTapper3;
     TextButton openButton;
     int numSynthTappers;
+    
+    Label filePathLabel;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MetroAudioProcessorEditor)
 };
