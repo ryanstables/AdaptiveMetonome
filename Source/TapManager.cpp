@@ -9,6 +9,133 @@
 
 
 //==============================================================================
+//========= Tapper =============================================================
+//==============================================================================
+Tapper::Tapper()
+{
+    // set some default vals using reset...
+    reset();
+}
+
+Tapper::~Tapper()
+{
+    // nothing to free up here yet...
+}
+
+
+void Tapper::reset()
+{
+    // reset to default vals...
+    TKNoiseStd      = 0;     // 25 ms timekeeper noise
+    MNoiseStd       = 0;     // 10 ms Motor noise
+    MNoisePrevValue = 0;      // no prev motor noise
+    setNoteLen(256);          // in samples
+    setVel(127);              // in MidiNotes
+    setFreq(60);              // ...
+    
+    // reset all the counters...
+    countdownToOffset.reset();
+    onsetTime.reset();
+    numberOfNoteOns.reset();
+    numberOfNoteOffs.reset();
+}
+
+void Tapper::turnNoteOn(MidiBuffer &midiMessages, int sampleNo, Counter globalCounter, bool updateMidiInOutputBuffer)
+{
+    if(!noteActive)
+    {
+        onsetTime.set(globalCounter.inSamples());
+        // report the noteOn time in samples...
+        printTapTime(globalCounter, "NoteOn");
+        
+        if(updateMidiInOutputBuffer) // this can be set to false so the input tapper doesn't write out midi messages
+        {
+            midiMessages.addEvent(MidiMessage::noteOn (MIDIChannel, tapperFreq, (uint8)tapperVel), sampleNo);
+        }
+        noteActive=true;
+        numberOfNoteOns.iterate(); //update the number of NoteOffs to have happened to this tapper
+    }
+}
+
+void Tapper::turnNoteOff(MidiBuffer &midiMessages, int sampleNo, Counter globalCounter, bool updateMidiInOutputBuffer)
+{
+    // report thee noteOff time in samples...
+    if(noteActive)
+    {
+        if(updateMidiInOutputBuffer) // this can be set to false so the input tapper doesn't write out midi messages
+            midiMessages.addEvent(MidiMessage::noteOff (MIDIChannel, tapperFreq, (uint8)tapperVel), sampleNo);
+        
+        noteActive=false;
+        resetOffsetCounter();
+        numberOfNoteOffs.iterate(); //update the number of NoteOffs to have happened to this tapper
+    }
+}
+
+// set all notes off in the current midi channel...
+void Tapper::kill(MidiBuffer &midiMessages)
+{
+    int lastEventTime = midiMessages.getLastEventTime();
+    // find the last tap time and add a note-off after it
+    midiMessages.addEvent(MidiMessage::allNotesOff(MIDIChannel), lastEventTime+1);
+    noteActive=false;
+}
+
+bool Tapper::requiresNoteOn(Counter inputCounter)
+{
+    if(inputCounter.inSamples()%interval==0 && inputCounter.inSamples() && !noteActive)
+        return true;
+    else
+        return false;
+}
+
+bool Tapper::requiresNoteOff()
+{
+    if (countdownToOffset.inSamples()>=noteLen && noteActive)
+        return true;
+    else
+        return false;
+}
+
+void Tapper::iterate(MidiBuffer & midiMessages, int sampleNum, Counter &globalCounter, std::vector <bool> &notesTriggered)
+{
+    // check to see if noteOns/Offs need to be added....
+    if(requiresNoteOn(globalCounter))
+    {
+        turnNoteOn(midiMessages, sampleNum, globalCounter, true);
+        notesTriggered[tapperID-1] = true;  // this gets turned off by the tapManager when all notes have been triggered
+        // thiis is i-1 as these are only synths and 0 is the input.
+    }
+    else if(requiresNoteOff())
+    {
+        turnNoteOff(midiMessages, sampleNum, globalCounter, true);
+    }
+    
+    if(noteActive) // if note is turned on, start counting towards the noteOff...
+        countdownToOffset.iterate();
+}
+
+
+void Tapper::updateParameters(int ID, int channel, int freq, int noteLen, int interval, int velocity)
+{
+    // function to update all parameters at once. Used for tapGen initialisation and in processBlock
+    setID(ID);
+    setChannel(channel); // the first one is the input tapper, start from chan 2
+    setFreq(freq); //octaves above middle C
+    setNoteLen(noteLen);
+    setInterval(interval);
+    setVel(velocity);
+}
+
+void Tapper::printTapTime(Counter globalCounter, String eventType)
+{
+    // use this to write the event to the log...
+    Logger::outputDebugString("ID: "+String(tapperID)+", Channel: "+String(MIDIChannel)+",  "+eventType+": "+String(globalCounter.inSamples()));
+}
+
+
+
+
+//==============================================================================
 //========= Generator ==========================================================
 //==============================================================================
 TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBlock, String dataPath)
@@ -24,7 +151,7 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     // open the logfile/stream (this will be moved when i create a 'filename' text input)
     Time time;
     
-    File logFile (localDataPath+"log.txt");
+    File logFile (localDataPath+"savedData.m");
     logFile.appendText("%% ----------------------------\n%% "+time.getCurrentTime().toString(true, true)+"\n");
     logFile.appendText("fs = "+String(fs)+";\n");
     logFile.appendText("numTappers = "+String(NumTappers)+";\n");
@@ -38,10 +165,10 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     // to be loaded in from external file or UI
     double tempAlphas[4][4] =
     {
-        { 0, .3, .3, .3},
-        {.2,  0, .2, .2},
-        {.1, .1,  0, .1},
-        {.5, .5, .5,  0}
+        { 0,   .25,  .25,  .25},
+        {.25,  .0,   .25,  .25},
+        {.0,   .0,   .0,   .0},
+        {.25,  .25,  .25,  .0}
     };
     
     // init alpha and [t(n-1,i)-t(n-1,j)]..
@@ -74,8 +201,8 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     }
     
 
-    logFile.appendText("\n% Trial: "+String(trialNum)+"\n");
-    logFile.appendText("x = [\n");
+    logFile.appendText("\n% Trial: "+String(trialNum.inSamples())+"\n");
+    logFile.appendText("x_0 = [\n");
     // to stream text to the log file whilst tapping...
     captainsLog = new FileOutputStream (logFile);
 }
@@ -93,7 +220,7 @@ void TapGenerator::reset()
     // reset all of the counters...
     beatCounter.reset();
     numberOfInputTaps.reset();
-
+    
 
     // reset the tappers...
     // ... make sure to reset the numberOfNoteOffs/ons as this is what iterates the midi file!
@@ -106,10 +233,9 @@ void TapGenerator::reset()
     updateBPM(bpm);
     
     // Write to the the end of the file...
-    trialNum++;
-    captainsLog->writeText("];\n\n% Trial: "+String(trialNum)+"\nx=[\n", false, false);
+    trialNum.iterate();
+    captainsLog->writeText("];\n\n% Trial: "+String(trialNum.inSamples())+"\nx_"+String(trialNum.inSamples())+"=[\n", false, false);
     captainsLog->flush();
-    
 }
 
 void TapGenerator::readPitchListFromMidiSeq(const OwnedArray<MidiMessageSequence> &inputMIDISeq)
@@ -248,10 +374,9 @@ void TapGenerator::updateBPM(double x)
 }
 
 // this function just uses noise to humanise the samples...
-void TapGenerator::transformNoise()
+void TapGenerator::transformNoise(int randWindowMs)
 {
     // old implementation: just uses randomness...
-     int randWindowMs = 2;
      int randWinInSamples = (randWindowMs/1000.0)*fs;  // amount of randomness to be added
     
     // return the interval with perturbation...
@@ -299,6 +424,7 @@ void TapGenerator::transformLPC()
     {
         scaledRandomValue = (rand.nextDouble() -.5)*2;
         Tn.add(TKInterval + sigmaT[tapper] * scaledRandomValue); // THIS SHOULD BE GAUSSIAN -/+ 1
+        
         scaledRandomValue = (rand.nextDouble() -.5)*2;
         Mn.add(sigmaM[tapper] * scaledRandomValue);
         Hn.add(Tn[tapper]+Mn[tapper] - Mprev[tapper]);
@@ -315,7 +441,7 @@ void TapGenerator::transformLPC()
     {
         for (int j=0; j<t.size(); j++)
         {
-            int tempAsync = t[i] - t[j];
+            int tempAsync = t[j] - t[i];
             asynch[i]->set(j, tempAsync);
             asynchAlpha[i]->set(j, tempAsync * alpha[i]->getUnchecked(j));
         }
@@ -329,9 +455,9 @@ void TapGenerator::transformLPC()
         for (int i=0; i<t.size(); i++)
             sumAlphAsyncColumn += asynchAlpha[i]->getUnchecked(tapper);
         // add it to the current onset and the noise and update the corresponding synth Tapper...
-        
+//        Logger::outputDebugString(String(tapper)+", AsyncColSum: "+String(sumAlphAsyncColumn)+", Hn: "+String(Hn[tapper]));
         synthesizedTappers[tapper-1]->setInterval(sumAlphAsyncColumn + Hn[tapper] /*+t[tapper]*/);
-        Logger::outputDebugString("SynthTapper["+String(tapper-1)+"] interval: "+String(synthesizedTappers[tapper-1]->getInterval()));
+//        Logger::outputDebugString("SynthTapper["+String(tapper-1)+"] interval: "+String(synthesizedTappers[tapper-1]->getInterval()));
     }
 }
 
@@ -412,8 +538,9 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
             if(userInputDetected)
             {
                 // Recalculate timing params with all registered asynch values...
-//                transformNoise();
+                //transformNoise(10.0); //input = ms windows
                 transformLPC();
+                
                 logResults("Beat ["+String(beatCounter.inSamples())+"], user input ["+String(numberOfInputTaps.inSamples())+"] found");
                 beatCounter.iterate(); // count the number of registered beats
                 updateTapAcceptanceWindow();
@@ -437,6 +564,13 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
                     // ...this could be used to feed params back to the UI
                 }
             }
+            
+//            // write out the tapper intervals to see when they are supposed to next tap...
+//            for (int tapper=0; tapper<numSynthesizedTappers; tapper++)
+//            {
+//                Logger::outputDebugString("SynthTapper["+String(tapper)+"] interval: "+String(synthesizedTappers[tapper]->getInterval()));
+//            }
+//            Logger::outputDebugString("\n");
         }
         globalCounter.iterate();
     }
