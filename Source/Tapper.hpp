@@ -10,30 +10,8 @@
 #define Tapper_hpp
 
 #include <stdio.h>
+#include "Counter.hpp"
 #include "../JuceLibraryCode/JuceHeader.h"
-
-//==============================================================================
-//========= Counter ============================================================
-//==============================================================================
-class Counter
-{
-public:
-    Counter(){};
-    ~Counter(){};
-    // do some other stuff to the object...
-    void iterate(){counter++;};
-    void reset(){counter = 0;};
-    void set(int x){counter = x;};
-    //return the counter in different formats...
-    int inSamples(){return counter;};
-    double   inFrames(int frameLen){return (double)counter/(double)frameLen;};
-    double   inSeconds(double fs){return (double)counter/fs;};
-    double   inMilliseconds(double fs){return inSeconds(fs)*1000.0;};
-    
-private:
-    int counter=0;
-};
-
 
 
 //==============================================================================
@@ -60,24 +38,25 @@ public:
     void setInterval(int x){interval=x;};
     int  getInterval(){return interval;};
     int  getOnsetTime(){return onsetTime.inSamples();};
+    int  getPrevOnsetTime(){return prevOnsetTime.inSamples();};
     
-    void turnNoteOn(MidiBuffer&, int, Counter, bool);
+    void turnNoteOn(MidiBuffer&, int, Counter, int, bool);
     void turnNoteOff(MidiBuffer&, int, Counter, bool);
     
     void updateParameters(int ID, int channel, int freq, int noteLen, int interval, int velocity);
     
     // counter functions...
-    void iterate(MidiBuffer&, int, Counter&, std::vector <bool>&);
+    void iterate(MidiBuffer&, int, Counter&, int, std::vector <bool>&);
     void kill(MidiBuffer&);
     void reset();
     Counter numberOfNoteOns;
     Counter numberOfNoteOffs;
     
     // LPC params...
-    Counter onsetTime;
+    Counter onsetTime, prevOnsetTime;
     double TKNoiseStd,
-           MNoiseStd,
-           MNoisePrevValue;
+    MNoiseStd,
+    MNoisePrevValue;
     
 private:
     void resetOffsetCounter() {countdownToOffset.reset();};
@@ -87,12 +66,14 @@ private:
     
     int noteLen=0, MIDIChannel=1, tapperID=1,
     tapperFreq=1, tapperVel=1, /*should both be assignable to MIDI*/
-    interval=22050, beatDivision=2;            /*overwrite from host*/
+    interval=22050, beatDivision=2,            /*overwrite from host*/
+    globalBeatNumber = 0;   // inject the beat number from the TapManager to check for valid prevOnsetTimes
     
     Counter countdownToOffset;
     
     bool noteActive = false;
 };
+
 
 
 

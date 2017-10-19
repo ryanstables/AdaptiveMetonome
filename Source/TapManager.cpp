@@ -9,133 +9,6 @@
 
 
 //==============================================================================
-//========= Tapper =============================================================
-//==============================================================================
-Tapper::Tapper()
-{
-    // set some default vals using reset...
-    reset();
-}
-
-Tapper::~Tapper()
-{
-    // nothing to free up here yet...
-}
-
-
-void Tapper::reset()
-{
-    // reset to default vals...
-    TKNoiseStd      = 0;     // 25 ms timekeeper noise
-    MNoiseStd       = 0;     // 10 ms Motor noise
-    MNoisePrevValue = 0;      // no prev motor noise
-    setNoteLen(256);          // in samples
-    setVel(127);              // in MidiNotes
-    setFreq(60);              // ...
-    
-    // reset all the counters...
-    countdownToOffset.reset();
-    onsetTime.reset();
-    numberOfNoteOns.reset();
-    numberOfNoteOffs.reset();
-}
-
-void Tapper::turnNoteOn(MidiBuffer &midiMessages, int sampleNo, Counter globalCounter, bool updateMidiInOutputBuffer)
-{
-    if(!noteActive)
-    {
-        onsetTime.set(globalCounter.inSamples());
-        // report the noteOn time in samples...
-        printTapTime(globalCounter, "NoteOn");
-        
-        if(updateMidiInOutputBuffer) // this can be set to false so the input tapper doesn't write out midi messages
-        {
-            midiMessages.addEvent(MidiMessage::noteOn (MIDIChannel, tapperFreq, (uint8)tapperVel), sampleNo);
-        }
-        noteActive=true;
-        numberOfNoteOns.iterate(); //update the number of NoteOffs to have happened to this tapper
-    }
-}
-
-void Tapper::turnNoteOff(MidiBuffer &midiMessages, int sampleNo, Counter globalCounter, bool updateMidiInOutputBuffer)
-{
-    // report thee noteOff time in samples...
-    if(noteActive)
-    {
-        if(updateMidiInOutputBuffer) // this can be set to false so the input tapper doesn't write out midi messages
-            midiMessages.addEvent(MidiMessage::noteOff (MIDIChannel, tapperFreq, (uint8)tapperVel), sampleNo);
-        
-        noteActive=false;
-        resetOffsetCounter();
-        numberOfNoteOffs.iterate(); //update the number of NoteOffs to have happened to this tapper
-    }
-}
-
-// set all notes off in the current midi channel...
-void Tapper::kill(MidiBuffer &midiMessages)
-{
-    int lastEventTime = midiMessages.getLastEventTime();
-    // find the last tap time and add a note-off after it
-    midiMessages.addEvent(MidiMessage::allNotesOff(MIDIChannel), lastEventTime+1);
-    noteActive=false;
-}
-
-bool Tapper::requiresNoteOn(Counter inputCounter)
-{
-    if(inputCounter.inSamples()%interval==0 && inputCounter.inSamples() && !noteActive)
-        return true;
-    else
-        return false;
-}
-
-bool Tapper::requiresNoteOff()
-{
-    if (countdownToOffset.inSamples()>=noteLen && noteActive)
-        return true;
-    else
-        return false;
-}
-
-void Tapper::iterate(MidiBuffer & midiMessages, int sampleNum, Counter &globalCounter, std::vector <bool> &notesTriggered)
-{
-    // check to see if noteOns/Offs need to be added....
-    if(requiresNoteOn(globalCounter))
-    {
-        turnNoteOn(midiMessages, sampleNum, globalCounter, true);
-        notesTriggered[tapperID-1] = true;  // this gets turned off by the tapManager when all notes have been triggered
-        // thiis is i-1 as these are only synths and 0 is the input.
-    }
-    else if(requiresNoteOff())
-    {
-        turnNoteOff(midiMessages, sampleNum, globalCounter, true);
-    }
-    
-    if(noteActive) // if note is turned on, start counting towards the noteOff...
-        countdownToOffset.iterate();
-}
-
-
-void Tapper::updateParameters(int ID, int channel, int freq, int noteLen, int interval, int velocity)
-{
-    // function to update all parameters at once. Used for tapGen initialisation and in processBlock
-    setID(ID);
-    setChannel(channel); // the first one is the input tapper, start from chan 2
-    setFreq(freq); //octaves above middle C
-    setNoteLen(noteLen);
-    setInterval(interval);
-    setVel(velocity);
-}
-
-void Tapper::printTapTime(Counter globalCounter, String eventType)
-{
-    // use this to write the event to the log...
-    Logger::outputDebugString("ID: "+String(tapperID)+", Channel: "+String(MIDIChannel)+",  "+eventType+": "+String(globalCounter.inSamples()));
-}
-
-
-
-
-//==============================================================================
 //========= Generator ==========================================================
 //==============================================================================
 TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBlock, String dataPath)
@@ -272,7 +145,7 @@ void TapGenerator::printPitchList()
 }
 
 
-void TapGenerator::updateInputTapper(MidiBuffer &midiMessages, Counter globalCounter)
+void TapGenerator::updateInputTapper(MidiBuffer &midiMessages, Counter globalCounter, int beatNumber)
 {
     // if the block has MIDI events in it
     // and a note hasn't already been registered in this window...
@@ -299,7 +172,7 @@ void TapGenerator::updateInputTapper(MidiBuffer &midiMessages, Counter globalCou
                 
                 // clear noteOn and replace with new pitch here...
                 
-                inputTapper.turnNoteOn(midiMessages, samplePos, globalCounter, false);
+                inputTapper.turnNoteOn(midiMessages, samplePos, globalCounter, beatNumber, false);
                 userInputDetected = true; // tell the tapManager that a noteOn has been registered.
                 numberOfInputTaps.iterate(); // count the number of taps that have been logged
             }
@@ -520,7 +393,7 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
     frameLen = blockSize;
     
     // update the input tapper with incoming on/off messages...
-    updateInputTapper(midiMessages, globalCounter);
+    updateInputTapper(midiMessages, globalCounter, beatCounter.inSamples());
 
     // GLOBAL SAMPLE COUNTER LOOP --------------------------------------
     for (int sampleNum=0; sampleNum<frameLen; sampleNum++)
@@ -529,7 +402,7 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
         for(int tapperNum=0; tapperNum<numSynthesizedTappers; tapperNum++)
         {
             updateTappersPitch(tapperNum);
-            synthesizedTappers[tapperNum]->iterate(midiMessages, sampleNum, globalCounter, notesTriggered);
+            synthesizedTappers[tapperNum]->iterate(midiMessages, sampleNum, globalCounter, beatCounter.inSamples(), notesTriggered);
         }
         
         // BEAT COUNTER -------------------------------------------

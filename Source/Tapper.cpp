@@ -12,13 +12,8 @@
 //==============================================================================
 Tapper::Tapper()
 {
-    // some default values to be overwritten by either the tapGenerator or the editor...
-    TKNoiseStd      = 5;     // 25 ms timekeeper noise
-    MNoiseStd       = 5;     // 10 ms Motor noise
-    MNoisePrevValue = 0;      // no prev motor noise
-    setNoteLen(256);          // in samples
-    setVel(127);              // in MidiNotes
-    setFreq(60);              // ...
+    // set some default vals using reset...
+    reset();
 }
 
 Tapper::~Tapper()
@@ -30,9 +25,10 @@ Tapper::~Tapper()
 void Tapper::reset()
 {
     // reset to default vals...
-    TKNoiseStd      = 25;     // 25 ms timekeeper noise
-    MNoiseStd       = 10;     // 10 ms Motor noise
-    MNoisePrevValue = 0;      // no prev motor noise
+    TKNoiseStd       = 0;     // 25 ms timekeeper noise
+    MNoiseStd        = 0;     // 10 ms Motor noise
+    MNoisePrevValue  = 0;      // no prev motor noise
+    globalBeatNumber = 0 ;
     setNoteLen(256);          // in samples
     setVel(127);              // in MidiNotes
     setFreq(60);              // ...
@@ -40,15 +36,20 @@ void Tapper::reset()
     // reset all the counters...
     countdownToOffset.reset();
     onsetTime.reset();
+    prevOnsetTime.reset();
     numberOfNoteOns.reset();
     numberOfNoteOffs.reset();
 }
 
-void Tapper::turnNoteOn(MidiBuffer &midiMessages, int sampleNo, Counter globalCounter, bool updateMidiInOutputBuffer)
+void Tapper::turnNoteOn(MidiBuffer &midiMessages, int sampleNo, Counter globalCounter, int beatNumber, bool updateMidiInOutputBuffer)
 {
     if(!noteActive)
     {
-        onsetTime.set(globalCounter.inSamples());
+        prevOnsetTime.set(onsetTime.inSamples()); // update the prev onsetTime before updating current one.
+        globalBeatNumber = beatNumber;
+        
+        onsetTime.set(globalCounter.inSamples()); // updateCurrent onsetTime
+        
         // report the noteOn time in samples...
         printTapTime(globalCounter, "NoteOn");
         
@@ -100,12 +101,12 @@ bool Tapper::requiresNoteOff()
         return false;
 }
 
-void Tapper::iterate(MidiBuffer & midiMessages, int sampleNum, Counter &globalCounter, std::vector <bool> &notesTriggered)
+void Tapper::iterate(MidiBuffer & midiMessages, int sampleNum, Counter &globalCounter, int beatNumber, std::vector <bool> &notesTriggered)
 {
     // check to see if noteOns/Offs need to be added....
     if(requiresNoteOn(globalCounter))
     {
-        turnNoteOn(midiMessages, sampleNum, globalCounter, true);
+        turnNoteOn(midiMessages, sampleNum, globalCounter, beatNumber, true);
         notesTriggered[tapperID-1] = true;  // this gets turned off by the tapManager when all notes have been triggered
         // thiis is i-1 as these are only synths and 0 is the input.
     }
