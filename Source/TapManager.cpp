@@ -278,15 +278,15 @@ void TapGenerator::transformLPC()
     double scaledRandomValue;
     
     // first add the input tapper...
-    t.add(inputTapper.getOnsetTime());                // ...already in samples
-    Mprev.add(inputTapper.MNoisePrevValue);           // ...already in samples
-    sigmaM.add( (inputTapper.MNoiseStd/1000)  * fs ); // ...converted from ms to samples
-    sigmaT.add( (inputTapper.TKNoiseStd/1000) * fs ); // ...converted from ms to samples
+    t.add(inputTapper.getPrevOnsetTime());                // ...already in samples
+    Mprev.add(inputTapper.MNoisePrevValue);               // ...already in samples
+    sigmaM.add( (inputTapper.MNoiseStd/1000)  * fs );     // ...converted from ms to samples
+    sigmaT.add( (inputTapper.TKNoiseStd/1000) * fs );     // ...converted from ms to samples
     
     //then synth Tappers...
     for (int tapper=0; tapper<numSynthesizedTappers; tapper++)
     {
-        t.add(synthesizedTappers[tapper]->getOnsetTime());
+        t.add(synthesizedTappers[tapper]->getPrevOnsetTime());
         Mprev.add(synthesizedTappers[tapper]->MNoisePrevValue);
         sigmaM.add( (synthesizedTappers[tapper]->MNoiseStd/1000)*fs);
         sigmaT.add( (synthesizedTappers[tapper]->TKNoiseStd/1000)*fs);
