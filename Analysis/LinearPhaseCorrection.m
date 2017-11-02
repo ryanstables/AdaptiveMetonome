@@ -7,10 +7,8 @@ Mn= sigmaM.*randn(length(sigmaM),1);  % ...Motor Noise
 Hn= Tn+Mn - Mprev; % ...noise at tap(n)
 
 % allocate arrays...
-async = zeros(N);
-AsyncAlpha = zeros(N);
-tNext      = zeros(N, 1); 
-A          = zeros(N, 1); 
+async = zeros(N); AsyncAlpha = zeros(N);
+tNext = zeros(N, 1);  A = zeros(N, 1); 
 
 % player i tap relative to player j...
 for i=1:N
