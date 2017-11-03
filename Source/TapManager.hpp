@@ -84,6 +84,7 @@ private:
     void transformNoise(int randWindowMs);
     void transformLPC();
     void logResults(String);
+    double getRandomValue(double std);
     
     // tappers...
     int numSynthesizedTappers;

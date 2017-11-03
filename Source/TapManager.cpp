@@ -111,6 +111,14 @@ void TapGenerator::reset()
     captainsLog->flush();
 }
 
+// generate a random value and scale it by the chosen mean and std dev...
+double TapGenerator::getRandomValue(double std)
+{
+    // make the random var -1/1...
+    double r = rand.nextDouble()*2-1;
+    return r*std;
+}
+
 void TapGenerator::readPitchListFromMidiSeq(const OwnedArray<MidiMessageSequence> &inputMIDISeq)
 {
     int numTracks = inputMIDISeq.size();
@@ -271,15 +279,12 @@ void TapGenerator::transformLPC()
     // what happens when input does not happen?
     // load alpha from csv file
 
-    // copy everything into local arrays so the input and synths are in the same loop?
     Array<double> t, sigmaM, sigmaT,     /* onset times and noise params */
                   TkNoise, MotorNoise, MotorNoisePrev, Hnoise;  /* noise vars */
     
-    double scaledRandomValue;
-    
     // first add the input tapper...
     t.add(inputTapper.getPrevOnsetTime());                // ...already in samples
-    MotorNoisePrev.add(   inputTapper.MNoisePrevValue);            // ...already in samples
+    MotorNoisePrev.add(inputTapper.MNoisePrevValue);            // ...already in samples
     sigmaM.add( (inputTapper.MNoiseStd/1000)  * fs );     // ...converted from ms to samples
     sigmaT.add( (inputTapper.TKNoiseStd/1000) * fs );     // ...converted from ms to samples
     
@@ -293,61 +298,31 @@ void TapGenerator::transformLPC()
     }
   
     // calculate noise vars for all tappers...
-    for (int tapper=0; tapper<t.size(); tapper++)
+    for (int i=0; i<t.size(); i++)
     {
-        scaledRandomValue = (rand.nextDouble() -.5)*2;  // make a getNextRandomDouble() function
-        TkNoise.add(sigmaT[tapper] * scaledRandomValue); // check this is Gaussian and (+/-) 1
-        scaledRandomValue = (rand.nextDouble() -.5)*2;
-        MotorNoise.add(sigmaM[tapper] * scaledRandomValue);
-        Hnoise.add(TkNoise[tapper] + MotorNoise[tapper] - MotorNoisePrev[tapper]);
+        TkNoise.add(getRandomValue(sigmaT[i]));
+        MotorNoise.add(getRandomValue(sigmaM[i]));
+        Hnoise.add(TkNoise[i] + MotorNoise[i] - MotorNoisePrev[i]);
+
+        double sumAsync = 0;
+        for (int j=0; j<t.size(); j++)
+        {
+            asynch[i]->set(j, t[i] - t[j]);
+            asynchAlpha[i]->set(j, alpha[i]->getUnchecked(j) * asynch[i]->getUnchecked(j));
+            sumAsync += asynchAlpha[i]->getUnchecked(j);
+        }
+        
+        if (i==0)
+        {   // update input motor noise...
+            inputTapper.MNoisePrevValue = MotorNoise[i];
+        }
+        else
+        {   // update next tap time (left out t[i]+)...
+            synthesizedTappers[i-1]->setInterval(TKInterval - sumAsync + Hnoise[i]);
+            // update motor noise...
+            synthesizedTappers[i-1]->MNoisePrevValue = MotorNoise[i];
+        }
     }
-    
-    
-    
-    
-    
-    
-    
-//    // calculate intermediate noise vars...
-//    for (int tapper=0; tapper<t.size(); tapper++)
-//    {
-//        scaledRandomValue = (rand.nextDouble() -.5)*2;
-//        Tn.add(TKInterval + sigmaT[tapper] * scaledRandomValue); // THIS SHOULD BE GAUSSIAN -/+ 1
-//        
-//        scaledRandomValue = (rand.nextDouble() -.5)*2;
-//        Mn.add(sigmaM[tapper] * scaledRandomValue);
-//        Hn.add(Tn[tapper]+Mn[tapper] - Mprev[tapper]);
-//        
-//        // update prev motor noise values....
-//        if (tapper==0)
-//            inputTapper.MNoisePrevValue = Mn[tapper];
-//        else
-//            synthesizedTappers[tapper-1]->MNoisePrevValue = Mn[tapper];
-//    }
-//
-//    // make a matrix of Asynchronies...
-//    for (int i=0; i<t.size(); i++)
-//    {
-//        for (int j=0; j<t.size(); j++)
-//        {
-//            int tempAsync = t[j] - t[i];
-//            asynch[i]->set(j, tempAsync);
-//            asynchAlpha[i]->set(j, tempAsync * alpha[i]->getUnchecked(j));
-//        }
-//    }
-//    
-//    // generate the next onset times using the sum of the noise and alphaAsyncs for each tapper...
-//    for (int tapper=1; tapper<t.size(); tapper++)
-//    {
-//        // sum the current column of the alphaAsync matrix...
-//        double sumAlphAsyncColumn = 0;
-//        for (int i=0; i<t.size(); i++)
-//            sumAlphAsyncColumn += asynchAlpha[i]->getUnchecked(tapper);
-//        // add it to the current onset and the noise and update the corresponding synth Tapper...
-////        Logger::outputDebugString(String(tapper)+", AsyncColSum: "+String(sumAlphAsyncColumn)+", Hn: "+String(Hn[tapper]));
-//        synthesizedTappers[tapper-1]->setInterval(sumAlphAsyncColumn + Hn[tapper] /*+t[tapper]*/);
-////        Logger::outputDebugString("SynthTapper["+String(tapper-1)+"] interval: "+String(synthesizedTappers[tapper-1]->getInterval()));
-//    }
 }
 
 
