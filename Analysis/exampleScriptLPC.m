@@ -5,10 +5,10 @@ TkInterval = 500;
 
 % Correction gains...
 alphas = [ 
-           0, .2, .2, .3; 
-          .2,  0, .2, .2; 
-          .1, .1,  0, .1; 
-          .1,  0,  0, 0
+           0,  0,  0, 0; 
+          .5,  0,  0, 0; 
+          .5,  0,  0, 0; 
+          .5,  0,  0, 0
          ];
 
 % Noise... 
@@ -16,7 +16,7 @@ Mprev = [0;0;0;0]; %[10;10;10;10];
 sigmaM = [0;0;0;0]; %[10; 10; 10; 10];
 sigmaT = [0;0;0;0]; %[25;25;25;25];
 
-for i = 1:4
+for i = 1:16
     [tNext(:, i), Mn] = LinearPhaseCorrection(t, TkInterval, Mprev, alphas, sigmaM, sigmaT);
     Mprev = Mn;
 
@@ -24,7 +24,8 @@ for i = 1:4
     t = tNext(:, i);
 end
 
-tNext';
+
+
 c = {'k', 'r', 'b', 'g'};
 for i = 1:length(t)
     plot(tNext(i, :), i, [c{i} 'd'], 'MarkerSize', 15); hold on; grid on;
