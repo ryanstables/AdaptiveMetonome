@@ -1,6 +1,9 @@
 %% Load data...
 clear;clc
-savedData;
+cd '../Data';
+savedData();
+cd '../Analysis/';
+
 
 %% choose trial 
 x = tNext'

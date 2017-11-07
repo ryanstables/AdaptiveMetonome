@@ -38,10 +38,10 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     // to be loaded in from external file or UI
     double tempAlphas[4][4] =
     {
-        { 0,   .25,  .25,  .25},
-        {.25,  .0,   .25,  .25},
-        {.0,   .0,   .0,   .0},
-        {.25,  .25,  .25,  .0}
+        { 0,   0,  0,  0},
+        {.5,   0,  0,  0},
+        {.5,   0,  0,  0},
+        {.5,   0,  0,  0}
     };
     
     // init alpha and [t(n-1,i)-t(n-1,j)]..
@@ -274,27 +274,21 @@ void TapGenerator::transformNoise(int randWindowMs)
 
 
 void TapGenerator::transformLPC()
-{
-    // Todo------
-    // what happens when input does not happen?
-    // load alpha from csv file
-
+{   // Todo- load alpha from csv file, and noise vars in GUI
+    
     Array<double> t, sigmaM, sigmaT,     /* onset times and noise params */
                   TkNoise, MotorNoise, MotorNoisePrev, Hnoise;  /* noise vars */
     
-    // first add the input tapper...
-    t.add(inputTapper.getPrevOnsetTime());                // ...already in samples
-    MotorNoisePrev.add(inputTapper.MNoisePrevValue);            // ...already in samples
-    sigmaM.add( (inputTapper.MNoiseStd/1000)  * fs );     // ...converted from ms to samples
-    sigmaT.add( (inputTapper.TKNoiseStd/1000) * fs );     // ...converted from ms to samples
-    
-    //then synth Tappers...
-    for (int tapper=0; tapper<numSynthesizedTappers; tapper++)
+    t.add(inputTapper.getPrevOnsetTime()); // ...first add the input tapper
+    MotorNoisePrev.add(inputTapper.MNoisePrevValue);
+    sigmaM.add(inputTapper.getMNoiseStdInSamples(fs));
+    sigmaT.add(inputTapper.getTKNoiseStdInSamples(fs));
+    for (int tapper=0; tapper<numSynthesizedTappers; tapper++) // ...then the synth tappers
     {
         t.add(synthesizedTappers[tapper]->getPrevOnsetTime());
         MotorNoisePrev.add(synthesizedTappers[tapper]->MNoisePrevValue);
-        sigmaM.add( (synthesizedTappers[tapper]->MNoiseStd/1000)*fs);
-        sigmaT.add( (synthesizedTappers[tapper]->TKNoiseStd/1000)*fs);
+        sigmaM.add(synthesizedTappers[tapper]->getMNoiseStdInSamples(fs));
+        sigmaT.add(synthesizedTappers[tapper]->getTKNoiseStdInSamples(fs));
     }
   
     // calculate noise vars for all tappers...
@@ -317,8 +311,9 @@ void TapGenerator::transformLPC()
             inputTapper.MNoisePrevValue = MotorNoise[i];
         }
         else
-        {   // update next tap time (left out t[i]+)...
+        {   // update the next tap time for tapper i...
             synthesizedTappers[i-1]->setInterval(TKInterval - sumAsync + Hnoise[i]);
+            synthesizedTappers[i-1]->setNextOnsetTime(t[i] + TKInterval - sumAsync + Hnoise[i]);
             // update motor noise...
             synthesizedTappers[i-1]->MNoisePrevValue = MotorNoise[i];
         }
@@ -415,6 +410,13 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
             {
                 if(globalCounter.inSamples() >= nextWindowThreshold)
                 {
+                    for (int synthTapper=0; synthTapper<numSynthesizedTappers; synthTapper++)
+                    {
+                        int lastTapTime = synthesizedTappers[synthTapper]->getOnsetTime();
+                        int interval = synthesizedTappers[synthTapper]->getInterval();
+                        synthesizedTappers[synthTapper]->setNextOnsetTime( lastTapTime + interval);
+                    }
+                        
                     // Recalculate timing params without the user input asnynch...
                     logResults("Beat ["+String(beatCounter.inSamples())+"] threshold reached");
                     updateTapAcceptanceWindow(); //<--- calculate the next window thresh here

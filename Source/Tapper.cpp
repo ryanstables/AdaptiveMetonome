@@ -88,7 +88,13 @@ void Tapper::kill(MidiBuffer &midiMessages)
 bool Tapper::requiresNoteOn(Counter inputCounter)
 {
     if(inputCounter.inSamples()%interval==0 && inputCounter.inSamples() && !noteActive)
+    {
+        Logger::outputDebugString("--globalCounter: "+String(inputCounter.inSamples()));
+        Logger::outputDebugString("--interval: "+String(interval));
+        Logger::outputDebugString("----nextOnsetTime: "+String(nextOnsetTime));
+        
         return true;
+    }
     else
         return false;
 }
