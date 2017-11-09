@@ -90,6 +90,10 @@ TapGenerator::~TapGenerator()
 
 void TapGenerator::reset()
 {
+    // reset the tappers...
+    for (int tapper=0; tapper<numSynthesizedTappers; tapper++)
+        synthesizedTappers[tapper]->reset();
+    
     // reset theTKinterval etc...
     updateBPM(bpm);
     
@@ -101,14 +105,6 @@ void TapGenerator::reset()
     // this is an absolute value, so it gets reset based on the BPM...
     nextWindowThreshold=TKInterval*1.5;
     
-    // reset the tappers...
-        
-    for (int tapper=0; tapper<numSynthesizedTappers; tapper++)
-    {
-        synthesizedTappers[tapper]->reset();
-    }
-
-
     // Write to the the end of the file...
     trialNum.iterate();
     captainsLog->writeText("];\n\n% Trial: "+String(trialNum.inSamples())+"\nx_"+String(trialNum.inSamples())+"=[\n", false, false);

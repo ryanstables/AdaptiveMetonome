@@ -145,5 +145,5 @@ void Tapper::updateParameters(int ID, int channel, int freq, int noteLen, int in
 void Tapper::printTapTime(Counter globalCounter, String eventType)
 {
     // use this to write the event to the log...
-    Logger::outputDebugString("ID: "+String(tapperID)+", Channel: "+String(MIDIChannel)+",  "+eventType+": "+String(globalCounter.inSamples())+"\n");
+    Logger::outputDebugString("ID: "+String(tapperID)+", Channel: "+String(MIDIChannel)+",  "+eventType+": "+String(globalCounter.inSamples())+"noteLen: "+String(noteLen)+"\n");
 }
