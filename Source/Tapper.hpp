@@ -71,7 +71,7 @@ private:
     tapperFreq=1, tapperVel=1, /*should both be assignable to MIDI*/
     interval=22050, beatDivision=2,            /*overwrite from host*/
     globalBeatNumber = 0,   // inject the beat number from the TapManager to check for valid prevOnsetTimes
-    nextOnsetTime = 0;
+    nextOnsetTime;
     
     Counter countdownToOffset;
     

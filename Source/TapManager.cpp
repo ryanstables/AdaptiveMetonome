@@ -39,9 +39,9 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     double tempAlphas[4][4] =
     {
         { 0,   0,  0,  0},
-        {.5,   0,  0,  0},
-        {.5,   0,  0,  0},
-        {.5,   0,  0,  0}
+        { 0,   0,  0,  0},
+        { 0,   0,  0,  0},
+        { 0,   0,  0,  0}
     };
     
     // init alpha and [t(n-1,i)-t(n-1,j)]..
@@ -93,8 +93,9 @@ void TapGenerator::reset()
     // reset all of the counters...
     beatCounter.reset();
     numberOfInputTaps.reset();
+    resetTriggeredFlags();
     
-
+    
     // reset the tappers...
     // ... make sure to reset the numberOfNoteOffs/ons as this is what iterates the midi file!
     for (int tapper=0; tapper<numSynthesizedTappers; tapper++)
@@ -234,6 +235,7 @@ void TapGenerator::resetTriggeredFlags()
         notesTriggered[i] = false;
     }
     // and reset the input detected flag...
+    userInputDetected = false;
 }
 
 
@@ -279,13 +281,13 @@ void TapGenerator::transformLPC()
     Array<double> t, sigmaM, sigmaT,     /* onset times and noise params */
                   TkNoise, MotorNoise, MotorNoisePrev, Hnoise;  /* noise vars */
     
-    t.add(inputTapper.getPrevOnsetTime()); // ...first add the input tapper
+    t.add(inputTapper.getOnsetTime()); // ...first add the input tapper
     MotorNoisePrev.add(inputTapper.MNoisePrevValue);
     sigmaM.add(inputTapper.getMNoiseStdInSamples(fs));
     sigmaT.add(inputTapper.getTKNoiseStdInSamples(fs));
     for (int tapper=0; tapper<numSynthesizedTappers; tapper++) // ...then the synth tappers
     {
-        t.add(synthesizedTappers[tapper]->getPrevOnsetTime());
+        t.add(synthesizedTappers[tapper]->getOnsetTime());
         MotorNoisePrev.add(synthesizedTappers[tapper]->MNoisePrevValue);
         sigmaM.add(synthesizedTappers[tapper]->getMNoiseStdInSamples(fs));
         sigmaT.add(synthesizedTappers[tapper]->getTKNoiseStdInSamples(fs));
@@ -307,13 +309,16 @@ void TapGenerator::transformLPC()
         }
         
         if (i==0)
-        {   // update input motor noise...
+        {   // update input motor noise of input tapper...
             inputTapper.MNoisePrevValue = MotorNoise[i];
         }
         else
         {   // update the next tap time for tapper i...
             synthesizedTappers[i-1]->setInterval(TKInterval - sumAsync + Hnoise[i]);
-            synthesizedTappers[i-1]->setNextOnsetTime(t[i] + TKInterval - sumAsync + Hnoise[i]);
+            
+            int onsetTime = t[i], noise = Hnoise[i];
+            synthesizedTappers[i-1]->setNextOnsetTime(onsetTime + TKInterval - sumAsync + noise);
+            
             // update motor noise...
             synthesizedTappers[i-1]->MNoisePrevValue = MotorNoise[i];
         }
@@ -374,7 +379,6 @@ void TapGenerator::updateTappersPitch(int tapperNum)
 // ------------------------------------------------------------------------------------------
 void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, int blockSize)
 {
-    
     // update block size from process block...
     frameLen = blockSize;
     
@@ -392,23 +396,24 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
         }
         
         // BEAT COUNTER -------------------------------------------
-        if(allNotesHaveBeenTriggered())
+        if(allNotesHaveBeenTriggered()) // ...if all synthesized tappers have tapped
         {
-            if(userInputDetected)
+            if(userInputDetected) // ...and the user has tapped too
             {
-                // Recalculate timing params with all registered asynch values...
-                //transformNoise(10.0); //input = ms windows
+                // apply transformation...
                 transformLPC();
                 
                 logResults("Beat ["+String(beatCounter.inSamples())+"], user input ["+String(numberOfInputTaps.inSamples())+"] found");
                 beatCounter.iterate(); // count the number of registered beats
                 updateTapAcceptanceWindow();
                 resetTriggeredFlags();
-                userInputDetected = false;
+
+                Logger::outputDebugString("\n-----------------------------\n");
+
             }
-            else
+            else // ...if no user input has happened yet...
             {
-                if(globalCounter.inSamples() >= nextWindowThreshold)
+                if(globalCounter.inSamples() >= nextWindowThreshold) // ...if the end of the current beatWindow is reached
                 {
                     for (int synthTapper=0; synthTapper<numSynthesizedTappers; synthTapper++)
                     {
@@ -422,7 +427,8 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
                     updateTapAcceptanceWindow(); //<--- calculate the next window thresh here
                     resetTriggeredFlags();
                     beatCounter.iterate(); // count the beats
-                    userInputDetected = false; // this should already be false!
+
+                    Logger::outputDebugString("\n-----------------------------\n");
                 }
                 else
                 {
@@ -430,17 +436,11 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
                     // ...this could be used to feed params back to the UI
                 }
             }
-            
-//            // write out the tapper intervals to see when they are supposed to next tap...
-//            for (int tapper=0; tapper<numSynthesizedTappers; tapper++)
-//            {
-//                Logger::outputDebugString("SynthTapper["+String(tapper)+"] interval: "+String(synthesizedTappers[tapper]->getInterval()));
-//            }
-//            Logger::outputDebugString("\n");
         }
         globalCounter.iterate();
     }
 }
+
 
 
 // Kill the taps that get left on if the playhead stops whilst a note is active...

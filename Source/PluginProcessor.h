@@ -65,7 +65,7 @@ public:
     
     // This needs to be set to the right path by the user! I'll fix this in the next version.
     // cuurently needs a foward slash on the end...
-     String LocalDataPath = "/Users/ryanstables/Documents/repos/adaptiveTappers/Data/";
+     String LocalDataPath = "/Users/ryanstables/Repos/AdaptiveMetonome/Data/";
 //    String LocalDataPath = "/Users/ryanstables/Repos/AdaptiveMetonome/Data/";
     String midiFileName = "haydn2.mid";
     

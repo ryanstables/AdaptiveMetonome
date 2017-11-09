@@ -273,25 +273,28 @@ void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& m
     }
     
     thisBlockPlaying = playhead.isPlaying;
-    if (thisBlockPlaying)
+    if (thisBlockPlaying) // ...playhead moving
     {
         // if the playhead is moving, start tapping...
         int blockSize = buffer.getNumSamples();
         tapManager->nextBlock(midiMessages, globalCounter, blockSize);
     }
-    else if(!thisBlockPlaying && lastBlockPlaying)
+    else if(!thisBlockPlaying && lastBlockPlaying) // ...playhead just stopped
     {
         // if the playhead just stopped moving, reset the tapManager...
         tapManager->reset();
+        globalCounter.reset();
     }
-    else
+    else // ...playhead not moving
     {
         // clean up any left-over noteOns...
         tapManager->killActiveTappers(midiMessages);
-    }
+    } 
     
     // send the midi messages to the Synth...
     synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
+    Logger::outputDebugString("Global counter: "+String(globalCounter.inSamples()));
+
     
     // counter++
     frameCounter.iterate();

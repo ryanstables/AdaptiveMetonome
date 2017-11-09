@@ -28,7 +28,9 @@ void Tapper::reset()
     TKNoiseStd       = 0;     // 25 ms timekeeper noise
     MNoiseStd        = 0;     // 10 ms Motor noise
     MNoisePrevValue  = 0;      // no prev motor noise
-    globalBeatNumber = 0 ;
+    globalBeatNumber = 0;
+    nextOnsetTime    = interval;
+    
     setNoteLen(256);          // in samples
     setVel(127);              // in MidiNotes
     setFreq(60);              // ...
@@ -87,11 +89,14 @@ void Tapper::kill(MidiBuffer &midiMessages)
 
 bool Tapper::requiresNoteOn(Counter inputCounter)
 {
-    if(inputCounter.inSamples()%interval==0 && inputCounter.inSamples() && !noteActive)
+//    if(inputCounter.inSamples()%interval==0 && inputCounter.inSamples() && !noteActive)
+    if(inputCounter.inSamples()==nextOnsetTime && inputCounter.inSamples() && !noteActive)
     {
+        // Debugging --------------------------
         Logger::outputDebugString("--globalCounter: "+String(inputCounter.inSamples()));
         Logger::outputDebugString("--interval: "+String(interval));
         Logger::outputDebugString("----nextOnsetTime: "+String(nextOnsetTime));
+        // Debugging --------------------------
         
         return true;
     }
@@ -140,5 +145,5 @@ void Tapper::updateParameters(int ID, int channel, int freq, int noteLen, int in
 void Tapper::printTapTime(Counter globalCounter, String eventType)
 {
     // use this to write the event to the log...
-    Logger::outputDebugString("ID: "+String(tapperID)+", Channel: "+String(MIDIChannel)+",  "+eventType+": "+String(globalCounter.inSamples()));
+    Logger::outputDebugString("ID: "+String(tapperID)+", Channel: "+String(MIDIChannel)+",  "+eventType+": "+String(globalCounter.inSamples())+"\n");
 }
