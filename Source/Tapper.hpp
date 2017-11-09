@@ -49,7 +49,7 @@ public:
     void updateParameters(int ID, int channel, int freq, int noteLen, int interval, int velocity);
     
     // counter functions...
-    void iterate(MidiBuffer&, int, Counter&, int, std::vector <bool>&);
+    void iterate(MidiBuffer&, int, Counter, int, std::vector <bool>&);
     void kill(MidiBuffer&);
     void reset();
     Counter numberOfNoteOns;

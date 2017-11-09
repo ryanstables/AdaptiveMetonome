@@ -112,7 +112,7 @@ bool Tapper::requiresNoteOff()
         return false;
 }
 
-void Tapper::iterate(MidiBuffer & midiMessages, int sampleNum, Counter &globalCounter, int beatNumber, std::vector <bool> &notesTriggered)
+void Tapper::iterate(MidiBuffer & midiMessages, int sampleNum, Counter globalCounter, int beatNumber, std::vector <bool> &notesTriggered)
 {
     // check to see if noteOns/Offs need to be added....
     if(requiresNoteOn(globalCounter))

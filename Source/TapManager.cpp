@@ -90,22 +90,25 @@ TapGenerator::~TapGenerator()
 
 void TapGenerator::reset()
 {
+    // reset theTKinterval etc...
+    updateBPM(bpm);
+    
     // reset all of the counters...
     beatCounter.reset();
     numberOfInputTaps.reset();
     resetTriggeredFlags();
     
+    // this is an absolute value, so it gets reset based on the BPM...
+    nextWindowThreshold=TKInterval*1.5;
     
     // reset the tappers...
-    // ... make sure to reset the numberOfNoteOffs/ons as this is what iterates the midi file!
+        
     for (int tapper=0; tapper<numSynthesizedTappers; tapper++)
     {
         synthesizedTappers[tapper]->reset();
     }
 
-    // reset theTKinterval etc...
-    updateBPM(bpm);
-    
+
     // Write to the the end of the file...
     trialNum.iterate();
     captainsLog->writeText("];\n\n% Trial: "+String(trialNum.inSamples())+"\nx_"+String(trialNum.inSamples())+"=[\n", false, false);
@@ -384,7 +387,7 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
     
     // update the input tapper with incoming on/off messages...
     updateInputTapper(midiMessages, globalCounter, beatCounter.inSamples());
-
+    
     // GLOBAL SAMPLE COUNTER LOOP --------------------------------------
     for (int sampleNum=0; sampleNum<frameLen; sampleNum++)
     {

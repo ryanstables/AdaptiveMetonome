@@ -289,12 +289,10 @@ void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& m
     {
         // clean up any left-over noteOns...
         tapManager->killActiveTappers(midiMessages);
-    } 
+    }
     
     // send the midi messages to the Synth...
     synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
-    Logger::outputDebugString("Global counter: "+String(globalCounter.inSamples()));
-
     
     // counter++
     frameCounter.iterate();
