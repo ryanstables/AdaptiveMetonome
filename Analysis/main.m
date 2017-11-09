@@ -1,3 +1,7 @@
+% Problem 
+% - if an input happens after the others, it's counted as the next beat...
+% - isn't this what the window is for? 
+
 %% Load data...
 clear;clc
 cd '../Data';
@@ -6,8 +10,8 @@ cd '../Analysis/';
 
 
 %% choose trial 
-x = tNext'
-% x= x_0;
+% x = tNext'
+x= x_0;
 % x= x_1;
 % x= x_2;
 

@@ -14,3 +14,5 @@ for i=1:N
     A(i) = sum(AsyncAlpha(i, :));
     tNext(i) = t(i) + TkInterval - A(i) + Hn(i);       
 end
+
+

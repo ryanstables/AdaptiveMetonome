@@ -93,9 +93,9 @@ bool Tapper::requiresNoteOn(Counter inputCounter)
     if(inputCounter.inSamples()==nextOnsetTime && inputCounter.inSamples() && !noteActive)
     {
         // Debugging --------------------------
-        Logger::outputDebugString("--globalCounter: "+String(inputCounter.inSamples()));
-        Logger::outputDebugString("--interval: "+String(interval));
-        Logger::outputDebugString("----nextOnsetTime: "+String(nextOnsetTime));
+        //        Logger::outputDebugString("--globalCounter: "+String(inputCounter.inSamples()));
+        //        Logger::outputDebugString("--interval: "+String(interval));
+        //        Logger::outputDebugString("----nextOnsetTime: "+String(nextOnsetTime));
         // Debugging --------------------------
         
         return true;
@@ -145,5 +145,11 @@ void Tapper::updateParameters(int ID, int channel, int freq, int noteLen, int in
 void Tapper::printTapTime(Counter globalCounter, String eventType)
 {
     // use this to write the event to the log...
-    Logger::outputDebugString("ID: "+String(tapperID)+", Channel: "+String(MIDIChannel)+",  "+eventType+": "+String(globalCounter.inSamples())+"noteLen: "+String(noteLen)+"\n");
+    Logger::outputDebugString(
+                              "ID: "+String(tapperID)
+                              +", Channel: "+String(MIDIChannel)
+                              +",  "+eventType
+                              +": "+String(globalCounter.inSamples())
+                              /*+", noteLen: "+String(noteLen)*/
+                              );
 }

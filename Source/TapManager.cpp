@@ -39,9 +39,9 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     double tempAlphas[4][4] =
     {
         { 0,   0,  0,  0},
-        { 0,   0,  0,  0},
-        { 0,   0,  0,  0},
-        { 0,   0,  0,  0}
+        {0.5,   0,  0,  0},
+        {0.5,   0,  0,  0},
+        {0.5,   0,  0,  0}
     };
     
     // init alpha and [t(n-1,i)-t(n-1,j)]..
@@ -93,19 +93,15 @@ void TapGenerator::reset()
     // reset the tappers...
     for (int tapper=0; tapper<numSynthesizedTappers; tapper++)
         synthesizedTappers[tapper]->reset();
-    
     // reset theTKinterval etc...
     updateBPM(bpm);
-    
     // reset all of the counters...
     beatCounter.reset();
     numberOfInputTaps.reset();
-    resetTriggeredFlags();
-    
+    resetTriggeredFlags();    
     // this is an absolute value, so it gets reset based on the BPM...
     nextWindowThreshold=TKInterval*1.5;
-    
-    // Write to the the end of the file...
+    // Write results to the the end of the file...
     trialNum.iterate();
     captainsLog->writeText("];\n\n% Trial: "+String(trialNum.inSamples())+"\nx_"+String(trialNum.inSamples())+"=[\n", false, false);
     captainsLog->flush();
@@ -214,13 +210,13 @@ void TapGenerator::updateTapAcceptanceWindow()
         
         inputTapAcceptanceWindow = currentMean-prevMean;
         nextWindowThreshold = currentMean + inputTapAcceptanceWindow / 2;
-        Logger::outputDebugString("Next Thresh: "+String(nextWindowThreshold)+"\n");
+//        Logger::outputDebugString("Next Thresh: "+String(nextWindowThreshold)+"\n");
     }
     else
     {
         // this should only happen on the first beat.
         nextWindowThreshold = TKInterval*1.5;
-        Logger::outputDebugString("Next Thresh: "+String(nextWindowThreshold)+"\n");
+//        Logger::outputDebugString("Next Thresh: "+String(nextWindowThreshold)+"\n");
     }
 }
 
@@ -299,6 +295,7 @@ void TapGenerator::transformLPC()
         MotorNoise.add(getRandomValue(sigmaM[i]));
         Hnoise.add(TkNoise[i] + MotorNoise[i] - MotorNoisePrev[i]);
 
+        
         double sumAsync = 0;
         for (int j=0; j<t.size(); j++)
         {
@@ -306,6 +303,7 @@ void TapGenerator::transformLPC()
             asynchAlpha[i]->set(j, alpha[i]->getUnchecked(j) * asynch[i]->getUnchecked(j));
             sumAsync += asynchAlpha[i]->getUnchecked(j);
         }
+        Logger::outputDebugString(String(sumAsync));
         
         if (i==0)
         {   // update input motor noise of input tapper...
@@ -315,8 +313,11 @@ void TapGenerator::transformLPC()
         {   // update the next tap time for tapper i...
             synthesizedTappers[i-1]->setInterval(TKInterval - sumAsync + Hnoise[i]);
             
-            int onsetTime = t[i], noise = Hnoise[i];
-            synthesizedTappers[i-1]->setNextOnsetTime(onsetTime + TKInterval - sumAsync + noise);
+            int onsetTime   = t[i],
+                noise       = Hnoise[i],
+                nextOnset   = onsetTime + TKInterval - sumAsync + noise;
+
+            synthesizedTappers[i-1]->setNextOnsetTime(nextOnset); // to be replaced with "nextOnset"
             
             // update motor noise...
             synthesizedTappers[i-1]->MNoisePrevValue = MotorNoise[i];
@@ -407,7 +408,7 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
                 updateTapAcceptanceWindow();
                 resetTriggeredFlags();
 
-                Logger::outputDebugString("\n-----------------------------\n");
+                Logger::outputDebugString("-----------------------------");
 
             }
             else // ...if no user input has happened yet...
@@ -427,7 +428,7 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
                     resetTriggeredFlags();
                     beatCounter.iterate(); // count the beats
 
-                    Logger::outputDebugString("\n-----------------------------\n");
+                    Logger::outputDebugString("-----------------------------");
                 }
                 else
                 {

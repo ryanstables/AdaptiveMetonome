@@ -1,9 +1,10 @@
 clear;clc
+
 % Prev onsets and TK interval...
-t(1) = 609664;
-t(2) = 625226;
-t(3) = 625226;
-t(4) = 625429;
+t(1) = 335744;
+t(2) = 374850;
+t(3) = 374850;
+t(4) = 374850;
 TkInterval = 500;
 
 % Correction gains...
