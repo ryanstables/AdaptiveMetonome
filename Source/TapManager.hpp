@@ -85,6 +85,7 @@ private:
     void transformLPC();
     void logResults(String);
     double getRandomValue(double std);
+    double meanSynthesizedOnsetTime();
     
     // tappers...
     int numSynthesizedTappers;
@@ -103,7 +104,6 @@ private:
     Counter beatCounter, numberOfInputTaps, trialNum;
     
     // for calculating the moving window of acceptance...
-    std::vector <int> prevTapTimes;
     bool userInputDetected=false;
     
     ScopedPointer<FileOutputStream> captainsLog; // for logging the results

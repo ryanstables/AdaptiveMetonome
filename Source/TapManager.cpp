@@ -38,10 +38,10 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     // to be loaded in from external file or UI
     double tempAlphas[4][4] =
     {
-        { 0,   0,  0,  0},
-        {0.5,   0,  0,  0},
-        {0.5,   0,  0,  0},
-        {0.5,   0,  0,  0}
+        {   0,   0,  0,  0},
+        {0.75,   0,  0,  0},
+        {0.75,   0,  0,  0},
+        {0.75,   0,  0,  0}
     };
     
     // init alpha and [t(n-1,i)-t(n-1,j)]..
@@ -68,7 +68,6 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
         notesTriggered.push_back(false);
         
         prevAsynch.push_back(0);
-        prevTapTimes.push_back(0);
         int pitch = 60+(i*12);
         synthesizedTappers[i]->updateParameters(i+1 /*ID*/, i+2 /*channel*/, pitch /*freq*/, 22050 /*noteLen*/, 44100 /*interval*/, 127 /*velocity*/);
     }
@@ -197,19 +196,15 @@ void TapGenerator::updateTapAcceptanceWindow()
     if(beatCounter.inSamples())
     {
         double currentMean=0, prevMean=0;
-        
         for (int i=0; i<numSynthesizedTappers; i++)
         {
             // find the mean of the current and prev tap times...
             currentMean+=(synthesizedTappers[i]->getOnsetTime()/(double)numSynthesizedTappers);
-            prevMean+=(prevTapTimes[i]/(double)numSynthesizedTappers);
-            
-            //assign current to prev tap times.
-            prevTapTimes[i] = synthesizedTappers[i]->getOnsetTime();
+            prevMean+=(synthesizedTappers[i]->getPrevOnsetTime()/(double)numSynthesizedTappers);
         }
         
         inputTapAcceptanceWindow = currentMean-prevMean;
-        nextWindowThreshold = currentMean + inputTapAcceptanceWindow / 2;
+//        nextWindowThreshold = currentMean + inputTapAcceptanceWindow / 2;
 //        Logger::outputDebugString("Next Thresh: "+String(nextWindowThreshold)+"\n");
     }
     else
@@ -220,7 +215,13 @@ void TapGenerator::updateTapAcceptanceWindow()
     }
 }
 
-
+double TapGenerator::meanSynthesizedOnsetTime()
+{
+    double currentMean=0;
+    for (int i=0; i<numSynthesizedTappers; i++)
+        currentMean+=(synthesizedTappers[i]->getOnsetTime()/(double)numSynthesizedTappers);
+    return currentMean;
+}
 
 void TapGenerator::resetTriggeredFlags()
 {
@@ -318,6 +319,7 @@ void TapGenerator::transformLPC()
                 nextOnset   = onsetTime + TKInterval - sumAsync + noise;
 
             synthesizedTappers[i-1]->setNextOnsetTime(nextOnset); // to be replaced with "nextOnset"
+            // synthesizedTappers[i-1]->setNextOnsetTime(onsetTime + TKInterval); // ...debugging
             
             // update motor noise...
             synthesizedTappers[i-1]->MNoisePrevValue = MotorNoise[i];
@@ -413,6 +415,8 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
             }
             else // ...if no user input has happened yet...
             {
+                nextWindowThreshold = meanSynthesizedOnsetTime()+inputTapAcceptanceWindow/2;
+
                 if(globalCounter.inSamples() >= nextWindowThreshold) // ...if the end of the current beatWindow is reached
                 {
                     for (int synthTapper=0; synthTapper<numSynthesizedTappers; synthTapper++)
@@ -440,7 +444,6 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
         globalCounter.iterate();
     }
 }
-
 
 
 // Kill the taps that get left on if the playhead stops whilst a note is active...

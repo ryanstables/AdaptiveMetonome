@@ -25,8 +25,8 @@ Tapper::~Tapper()
 void Tapper::reset()
 {
     // reset to default vals...
-    TKNoiseStd       = 0;     // 25 ms timekeeper noise
-    MNoiseStd        = 0;     // 10 ms Motor noise
+    TKNoiseStd       = 10;     // 25 ms timekeeper noise
+    MNoiseStd        = 10;     // 10 ms Motor noise
     MNoisePrevValue  = 0;      // no prev motor noise
     globalBeatNumber = 0;
     nextOnsetTime    = interval;
