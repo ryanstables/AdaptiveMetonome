@@ -69,11 +69,13 @@ public:
     String LocalDataPath = "/Users/ryanstables/Documents/repos/adaptiveTappers/Data/";
     String midiFileName = "haydn2.mid";
     
-    // parameters for the gains...
+    // parameters for the gains and noise...
     AudioParameterInt *gainsParam, *velParam1, *velParam2, *velParam3;
+    AudioParameterFloat *TKNoiseParam1, *TKNoiseParam2, *TKNoiseParam3;
     
     void updateInputTapperVelocity(int vel);
     void updatedSynthTapperVelocity(int tapperNum, int vel);
+    void updateSynthTapperTKNoise(int tapperNum, float noiseInMs);
     
     int getNumTappers(){return numSynthesizedTappers;};
     

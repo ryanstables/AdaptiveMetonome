@@ -40,6 +40,11 @@ MetroAudioProcessor::MetroAudioProcessor()
     addParameter(velParam1 = new AudioParameterInt("synthVel1", "Vel of synth Tapper 1", 0, 127, 127));
     addParameter(velParam2 = new AudioParameterInt("synthVel2", "Vel of synth Tapper 2", 0, 127, 127));
     addParameter(velParam3 = new AudioParameterInt("synthVel3", "Vel of synth Tapper 3", 0, 127, 127));
+
+    addParameter(TKNoiseParam1 = new AudioParameterFloat("synthTKNoise1", "TKNoise of synth Tapper 1", 0, 50, 0));
+    addParameter(TKNoiseParam2 = new AudioParameterFloat("synthTKNoise2", "TKNoise of synth Tapper 2", 0, 50, 0));
+    addParameter(TKNoiseParam3 = new AudioParameterFloat("synthTKNoise3", "TKNoise of synth Tapper 3", 0, 50, 0));
+
 }
 
 
@@ -187,7 +192,31 @@ void MetroAudioProcessor::updateInputTapperVelocity(int vel)
         tapManager->inputTapper.setVel(*gainsParam);
     }
     
-    Logger::outputDebugString("Processor (input): "+String(*gainsParam));
+    Logger::outputDebugString("Processor (input gain): "+String(*gainsParam));
+}
+
+
+
+void MetroAudioProcessor::updateSynthTapperTKNoise(int tapperNum, float noiseInMs)
+{
+    if (tapperNum==0)
+        *TKNoiseParam1 = noiseInMs;
+    else if (tapperNum==1)
+        *TKNoiseParam2 = noiseInMs;
+    else if (tapperNum==2)
+        *TKNoiseParam3 = noiseInMs;
+
+    // check tapManager exists...
+    if(tappersAlreadyAllocated)
+    {
+        for (int  tapper = 0; tapper<numSynthesizedTappers; tapper++)
+        {
+            if (tapperNum==tapper)
+                tapManager->synthesizedTappers[tapper]->TKNoiseStd = noiseInMs;
+        }
+    }
+    
+    Logger::outputDebugString("Processor (synth"+String(tapperNum)+" noise): "+String(tapManager->synthesizedTappers[tapperNum]->TKNoiseStd));
 }
 
 
@@ -216,7 +245,7 @@ void MetroAudioProcessor::updatedSynthTapperVelocity(int tapperNum, int vel)
                 tapManager->synthesizedTappers[tapper]->setVel(vel);
         }
     }
-    Logger::outputDebugString("Processor (synth"+String(tapperNum)+"): "+String(*gainsParam));
+    Logger::outputDebugString("Processor (synth"+String(tapperNum)+" gain): "+String(vel));
 }
 
 //==============================================================================

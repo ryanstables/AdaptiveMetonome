@@ -16,7 +16,14 @@
 MetroAudioProcessorEditor::MetroAudioProcessorEditor (MetroAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p)
 {
-
+    // UI params...
+    width = 500;
+    height = 400;
+    xOffset = 10;
+    yOffset = 50;
+    sliderwidth = 50;
+    sliderheight = 120;
+    
     String filePath = processor.LocalDataPath+processor.midiFileName;
 
     // file path label...
@@ -26,12 +33,17 @@ MetroAudioProcessorEditor::MetroAudioProcessorEditor (MetroAudioProcessor& p)
     
     
     // input tapper vel...
-    addVelSlider(slider1, xOffset, yOffset);
+    addVelSlider(slider1, xOffset, yOffset+20);
     
-    // synth Tapper Vels...
-    addVelSlider(velTapper1, 10+xOffset+1*sliderwidth, yOffset);
-    addVelSlider(velTapper2, 20+xOffset+2*sliderwidth, yOffset);
-    addVelSlider(velTapper3, 30+xOffset+3*sliderwidth, yOffset);
+    // synth Tapper sliders...
+    addVelSlider(velTapper1, 10+xOffset+1*sliderwidth, yOffset+20);
+    addRotarySlider(TKNoiseSlider1, 10+xOffset+1*sliderwidth, yOffset+sliderheight+40);
+    
+    addVelSlider(velTapper2, 20+xOffset+2*sliderwidth, yOffset+20);
+    addRotarySlider(TKNoiseSlider2, 20+xOffset+2*sliderwidth, yOffset+sliderheight+40);
+    
+    addVelSlider(velTapper3, 30+xOffset+3*sliderwidth, yOffset+20);
+    addRotarySlider(TKNoiseSlider3, 30+xOffset+3*sliderwidth, yOffset+sliderheight+40);
     
     //add the openFile button...
     addButton(openButton, width-70, 50);
@@ -53,9 +65,23 @@ void MetroAudioProcessorEditor::addVelSlider(Slider &s, int xOffset, int yOffset
     addAndMakeVisible(s);
     s.setRange(0.f, 127.f, 1.f);
     s.setValue(127);
-    s.setBounds(xOffset, yOffset, sliderwidth, height-80);
+    s.setBounds(xOffset, yOffset, sliderwidth, sliderheight);
     s.setSliderStyle(Slider::LinearVertical);
-    
+    // text box...
+    s.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, false, sliderwidth, 20);
+    s.setTextBoxIsEditable(true);
+    s.addListener(this);
+}
+
+void MetroAudioProcessorEditor::addRotarySlider(Slider &s, int xOffset, int yOffset)
+{
+    // init the rotary TK/M noise sliders...
+    addAndMakeVisible(s);
+    s.setRange(0.0, 50.0, 0.5);
+    s.setValue(0.0);
+    s.setBounds(xOffset, yOffset, sliderwidth, sliderwidth);
+    s.setSliderStyle(Slider::Rotary);
+    // text box...
     s.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, false, sliderwidth, 20);
     s.setTextBoxIsEditable(true);
     s.addListener(this);
@@ -99,7 +125,7 @@ void MetroAudioProcessorEditor::buttonClicked(Button *b)
 
 void MetroAudioProcessorEditor::sliderValueChanged(Slider *s)
 {
-    // update stuff based on the slider...
+    // update the processor using the velocity sliders...
     if(s == &slider1)
     {
         processor.updateInputTapperVelocity(slider1.getValue());
@@ -116,6 +142,21 @@ void MetroAudioProcessorEditor::sliderValueChanged(Slider *s)
     {
         processor.updatedSynthTapperVelocity(2, velTapper3.getValue());
     }
+    /*
+    update the procesor using the rotary noise knobs...
+    */
+    else if(s == &TKNoiseSlider1)
+    {
+        processor.updateSynthTapperTKNoise(0, TKNoiseSlider1.getValue());
+    }
+    else if(s == &TKNoiseSlider2)
+    {
+        processor.updateSynthTapperTKNoise(1, TKNoiseSlider2.getValue());
+    }
+    else if(s == &TKNoiseSlider3)
+    {
+        processor.updateSynthTapperTKNoise(2, TKNoiseSlider2.getValue());
+    }
 }
 
 
@@ -126,6 +167,11 @@ void MetroAudioProcessorEditor::timerCallback()
     velTapper1.setValue(*processor.velParam1, dontSendNotification);
     velTapper2.setValue(*processor.velParam2, dontSendNotification);
     velTapper3.setValue(*processor.velParam3, dontSendNotification);
+    
+    // noise params from processor...
+    TKNoiseSlider1.setValue(*processor.TKNoiseParam1, dontSendNotification);
+    TKNoiseSlider2.setValue(*processor.TKNoiseParam2, dontSendNotification);
+    TKNoiseSlider3.setValue(*processor.TKNoiseParam3, dontSendNotification);
 }
 
 
@@ -146,10 +192,15 @@ void MetroAudioProcessorEditor::paint (Graphics& g)
     // labels for vel faders...
     g.setFont(15.f);
     g.setColour(Colours::blue);
-    g.drawFittedText(	"v1",  xOffset, height-20, sliderwidth, 10, Justification::centred, 1, 0.0f);
-    g.drawFittedText(	"v2",  10+xOffset+1*sliderwidth, height-20, sliderwidth, 10, Justification::centred, 1, 0.0f);
-    g.drawFittedText(	"vio", 20+xOffset+2*sliderwidth, height-20, sliderwidth, 10, Justification::centred, 1, 0.0f);
-    g.drawFittedText(	"cel", 30+xOffset+3*sliderwidth, height-20, sliderwidth, 10, Justification::centred, 1, 0.0f);
+    g.drawFittedText(	"v1",  xOffset, yOffset, sliderwidth, 10, Justification::centred, 1, 0.0f);
+    g.drawFittedText(	"v2",  10+xOffset+1*sliderwidth, yOffset, sliderwidth, 10, Justification::centred, 1, 0.0f);
+    g.drawFittedText(	"vio", 20+xOffset+2*sliderwidth, yOffset, sliderwidth, 10, Justification::centred, 1, 0.0f);
+    g.drawFittedText(	"cel", 30+xOffset+3*sliderwidth, yOffset, sliderwidth, 10, Justification::centred, 1, 0.0f);
+
+    // noise label...
+    g.setFont(11.f);
+    g.setColour(Colours::black);
+    g.drawFittedText(    "TkNoise:", xOffset, 50+yOffset+sliderheight, sliderwidth, 10, Justification::left, 1, 0.0f);
 }
 
 void MetroAudioProcessorEditor::resized()

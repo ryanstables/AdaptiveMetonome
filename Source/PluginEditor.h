@@ -40,15 +40,18 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     MetroAudioProcessor& processor;
-    int width = 500, height = 300, xOffset = 10, yOffset = 50, sliderwidth = 50;
-
-    void addVelSlider(Slider &s, int xOffset, int yOffset);
+    int width, height, xOffset, yOffset, sliderwidth, sliderheight;
+    
     void addButton(Button &b, int xOffset, int yOffset);
+    void addVelSlider(Slider &s, int xOffset, int yOffset);
+    void addRotarySlider(Slider &s, int xOffset, int yOffset);
 
 
     // sliders to control the velocities of the tappers...
-    // change to an owned array
     Slider slider1, velTapper1, velTapper2, velTapper3;
+    // sliders to control the noise of the synth tappers...
+    Slider TKNoiseSlider1, TKNoiseSlider2, TKNoiseSlider3;
+
     TextButton openButton;
     int numSynthTappers;
     
