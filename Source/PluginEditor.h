@@ -51,7 +51,13 @@ private:
     Slider slider1, velTapper1, velTapper2, velTapper3;
     // sliders to control the noise of the synth tappers...
     Slider TKNoiseSlider1, TKNoiseSlider2, TKNoiseSlider3;
+    Slider MNoiseSlider1,  MNoiseSlider2,  MNoiseSlider3;
 
+    Slider  p1p1, p1p2, p1p3, p1p4,
+            p2p1, p2p2, p2p3, p2p4,
+            p3p1, p3p2, p3p3, p3p4,
+            p4p1, p4p2, p4p3, p4p4;
+    
     TextButton openButton;
     int numSynthTappers;
     
