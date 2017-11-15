@@ -13,6 +13,9 @@
               enableIAA="0" cppLanguageStandard="11">
   <MAINGROUP id="ZtK7il" name="Metro">
     <GROUP id="{98B24CF7-60FF-9639-A3B5-7F151E668A04}" name="Source">
+      <FILE id="jeN8Af" name="Counter.hpp" compile="0" resource="0" file="Source/Counter.hpp"/>
+      <FILE id="Zxt56d" name="Tapper.cpp" compile="1" resource="0" file="Source/Tapper.cpp"/>
+      <FILE id="y64qHX" name="Tapper.hpp" compile="0" resource="0" file="Source/Tapper.hpp"/>
       <FILE id="boyo6L" name="Synth.h" compile="0" resource="0" file="Source/Synth.h"/>
       <FILE id="fTt3IW" name="TapManager.cpp" compile="1" resource="0" file="Source/TapManager.cpp"/>
       <FILE id="KSzXAz" name="TapManager.hpp" compile="0" resource="0" file="Source/TapManager.hpp"/>
@@ -32,20 +35,20 @@
         <CONFIGURATION name="Release" isDebug="0" optimisation="3" targetName="Metro"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
-        <MODULEPATH id="juce_core" path="../../JUCE/modules"/>
-        <MODULEPATH id="juce_events" path="../../JUCE/modules"/>
-        <MODULEPATH id="juce_graphics" path="../../JUCE/modules"/>
-        <MODULEPATH id="juce_data_structures" path="../../JUCE/modules"/>
-        <MODULEPATH id="juce_gui_basics" path="../../JUCE/modules"/>
-        <MODULEPATH id="juce_gui_extra" path="../../JUCE/modules"/>
-        <MODULEPATH id="juce_cryptography" path="../../JUCE/modules"/>
-        <MODULEPATH id="juce_video" path="../../JUCE/modules"/>
-        <MODULEPATH id="juce_opengl" path="../../JUCE/modules"/>
-        <MODULEPATH id="juce_audio_basics" path="../../JUCE/modules"/>
-        <MODULEPATH id="juce_audio_devices" path="../../JUCE/modules"/>
-        <MODULEPATH id="juce_audio_formats" path="../../JUCE/modules"/>
-        <MODULEPATH id="juce_audio_processors" path="../../JUCE/modules"/>
-        <MODULEPATH id="juce_audio_plugin_client" path="../../JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_cryptography" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_video" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_opengl" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_basics" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="../../../JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
   </EXPORTFORMATS>

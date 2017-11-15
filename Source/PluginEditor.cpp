@@ -12,13 +12,14 @@
 #include "PluginEditor.h"
 
 
+
 //==============================================================================
 MetroAudioProcessorEditor::MetroAudioProcessorEditor (MetroAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p)
 {
     // UI params...
     width = 600;
-    height = 400;
+    height = 360;
     xOffset = 10;
     yOffset = 50;
     sliderwidth = 50;
@@ -27,55 +28,31 @@ MetroAudioProcessorEditor::MetroAudioProcessorEditor (MetroAudioProcessor& p)
     // set the window size...
     setSize (width, height);
     
-    String filePath = processor.LocalDataPath+processor.midiFileName;
-
-    // file path label...
-    addAndMakeVisible(filePathLabel);
-    filePathLabel.setBounds(xOffset, 20, width-20, 30);
-    filePathLabel.setText("MIDI: "+filePath, dontSendNotification);
     
-    //add the openFile button...
-    addButton(openButton, width-70, 20);
-
+    //add the openFile button and label...
+    MidiFilePath = processor.LocalDataPath+processor.midiFileName;
+    addAndMakeVisible(filePathLabel);
+    addButton(openButton);
     
     // input tapper vel...
-    addVelSlider(slider1, xOffset, yOffset+20);
+    addVelSlider(slider1);
     
     // synth Tapper sliders...
-    addVelSlider(velTapper1, 10+xOffset+1*sliderwidth, yOffset+20);
-    addRotarySlider(TKNoiseSlider1, 10+xOffset+1*sliderwidth, yOffset+sliderheight+40);
-    addRotarySlider(MNoiseSlider1,  10+xOffset+1*sliderwidth, yOffset+sliderheight+sliderwidth+50);
+    addVelSlider(velTapper1);
+    addRotarySlider(TKNoiseSlider1);
+    addRotarySlider(MNoiseSlider1);
     
-    addVelSlider(velTapper2, 20+xOffset+2*sliderwidth, yOffset+20);
-    addRotarySlider(TKNoiseSlider2, 20+xOffset+2*sliderwidth, yOffset+sliderheight+40);
-    addRotarySlider(MNoiseSlider2,  20+xOffset+2*sliderwidth, yOffset+sliderheight+sliderwidth+50);
+    addVelSlider(velTapper2);
+    addRotarySlider(TKNoiseSlider2);
+    addRotarySlider(MNoiseSlider2);
     
-    addVelSlider(velTapper3, 30+xOffset+3*sliderwidth, yOffset+20);
-    addRotarySlider(TKNoiseSlider3, 30+xOffset+3*sliderwidth, yOffset+sliderheight+40);
-    addRotarySlider(MNoiseSlider3,  30+xOffset+3*sliderwidth, yOffset+sliderheight+sliderwidth+50);
+    addVelSlider(velTapper3);
+    addRotarySlider(TKNoiseSlider3);
+    addRotarySlider(MNoiseSlider3);
     
-    // alphas...
-    int halfwidth = width/2;
-    addRotarySlider(p1p1, halfwidth+1*sliderwidth,    yOffset+20);
-    addRotarySlider(p1p2, 10+halfwidth+2*sliderwidth, yOffset+20);
-    addRotarySlider(p1p3, 20+halfwidth+3*sliderwidth, yOffset+20);
-    addRotarySlider(p1p4, 30+halfwidth+4*sliderwidth, yOffset+20);
-
-    addRotarySlider(p2p1, halfwidth+1*sliderwidth,    yOffset+30+sliderwidth);
-    addRotarySlider(p2p2, 10+halfwidth+2*sliderwidth, yOffset+30+sliderwidth);
-    addRotarySlider(p2p3, 20+halfwidth+3*sliderwidth, yOffset+30+sliderwidth);
-    addRotarySlider(p2p4, 30+halfwidth+4*sliderwidth, yOffset+30+sliderwidth);
+    // alpha sub-component...
+    addAndMakeVisible(alphaMatrix);
     
-    addRotarySlider(p3p1, halfwidth+1*sliderwidth,    yOffset+40+2*sliderwidth);
-    addRotarySlider(p3p2, 10+halfwidth+2*sliderwidth, yOffset+40+2*sliderwidth);
-    addRotarySlider(p3p3, 20+halfwidth+3*sliderwidth, yOffset+40+2*sliderwidth);
-    addRotarySlider(p3p4, 30+halfwidth+4*sliderwidth, yOffset+40+2*sliderwidth);
-
-    addRotarySlider(p4p1, halfwidth+1*sliderwidth,    yOffset+50+3*sliderwidth);
-    addRotarySlider(p4p2, 10+halfwidth+2*sliderwidth, yOffset+50+3*sliderwidth);
-    addRotarySlider(p4p3, 20+halfwidth+3*sliderwidth, yOffset+50+3*sliderwidth);
-    addRotarySlider(p4p4, 30+halfwidth+4*sliderwidth, yOffset+50+3*sliderwidth);
-
     //start the timer (every 25ms)...
     startTimer(25);
 }
@@ -84,13 +61,12 @@ MetroAudioProcessorEditor::~MetroAudioProcessorEditor()
 {
 }
 
-void MetroAudioProcessorEditor::addVelSlider(Slider &s, int xOffset, int yOffset)
+void MetroAudioProcessorEditor::addVelSlider(Slider &s)
 {
     // init the velocity sliders...
     addAndMakeVisible(s);
     s.setRange(0.f, 127.f, 1.f);
     s.setValue(127);
-    s.setBounds(xOffset, yOffset, sliderwidth, sliderheight);
     s.setSliderStyle(Slider::LinearVertical);
     // text box...
     s.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, false, sliderwidth, 20);
@@ -98,13 +74,12 @@ void MetroAudioProcessorEditor::addVelSlider(Slider &s, int xOffset, int yOffset
     s.addListener(this);
 }
 
-void MetroAudioProcessorEditor::addRotarySlider(Slider &s, int xOffset, int yOffset)
+void MetroAudioProcessorEditor::addRotarySlider(Slider &s)
 {
     // init the rotary TK/M noise sliders...
     addAndMakeVisible(s);
     s.setRange(0.0, 50.0, 0.5);
     s.setValue(0.0);
-    s.setBounds(xOffset, yOffset, sliderwidth, sliderwidth);
     s.setSliderStyle(Slider::Rotary);
     // text box...
     s.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, false, sliderwidth, 20);
@@ -113,15 +88,13 @@ void MetroAudioProcessorEditor::addRotarySlider(Slider &s, int xOffset, int yOff
 }
 
 
-void MetroAudioProcessorEditor::addButton(Button &b, int xOffset, int yOffset)
+void MetroAudioProcessorEditor::addButton(Button &b)
 {
     addAndMakeVisible(b);
     b.setButtonText("open...");
     b.setColour (TextButton::buttonColourId, Colours::green);
-    b.setBounds(xOffset, yOffset, 50, 20);
     b.addListener(this);
 }
-
 
 
 void MetroAudioProcessorEditor::openMidiFile()
@@ -203,38 +176,68 @@ void MetroAudioProcessorEditor::timerCallback()
 //==============================================================================
 void MetroAudioProcessorEditor::paint (Graphics& g)
 {
-    g.fillAll (Colours::lightgrey);
-    
-    // filename...
-//    String filePath = processor.LocalDataPath+processor.midiFileName;
-//    g.drawFittedText("MIDI: "+filePath, 10, 10, width-20, 30, Justification::left, 3);
-    
-    // instructions...
+    g.fillAll (Colour::fromRGB(85, 95, 160));
     g.setFont(25.f);
-    g.setColour(Colours::red);
-    g.drawMultiLineText("Wait for 4 beeps, then start tapping along...", xOffset, 20, width);
-
-    g.setColour(Colours::black);
-    g.fillRect(width/2+1, yOffset, width, height-yOffset);
+    g.setColour(Colours::yellow);
+    g.drawMultiLineText("Wait for 4 beeps, then start tapping along...", xOffset, 25, getWidth());
     
-    // labels for vel faders...
+    int topTextBarHeight = 50,
+    bottomBarHeight = 50;
+    auto r = getLocalBounds();
+    
+    auto topBar = r.removeFromTop(topTextBarHeight);
+    auto bottomBar = r.removeFromBottom(bottomBarHeight);
+    auto leftPanel = r.removeFromLeft(getWidth()/2);
+    auto rightPanel = r;
+    
+    int velSliderWidth =leftPanel.getWidth()/4;
+    auto VelocitySliderLabelArea = leftPanel.removeFromTop(30);
+    g.setFont(18.f);
+    g.drawFittedText("V1", VelocitySliderLabelArea.removeFromLeft(velSliderWidth), Justification::centred, 1);
+    g.drawFittedText("V2", VelocitySliderLabelArea.removeFromLeft(velSliderWidth), Justification::centred, 1);
+    g.drawFittedText("Vio", VelocitySliderLabelArea.removeFromLeft(velSliderWidth), Justification::centred, 1);
+    g.drawFittedText("Cel", VelocitySliderLabelArea.removeFromLeft(velSliderWidth), Justification::centred, 1);
+    
+    auto VelocitySliderArea = leftPanel.removeFromTop(sliderheight);
+    slider1.setBounds(VelocitySliderArea.removeFromLeft(velSliderWidth));
+    velTapper1.setBounds(VelocitySliderArea.removeFromLeft(velSliderWidth));
+    velTapper2.setBounds(VelocitySliderArea.removeFromLeft(velSliderWidth));
+    velTapper3.setBounds(VelocitySliderArea.removeFromLeft(velSliderWidth));
+    
+    auto TKnoiseSliderArea = leftPanel.removeFromTop(sliderwidth);
     g.setFont(15.f);
-    g.setColour(Colours::blue);
-    g.drawFittedText(	"v1",  xOffset, yOffset, sliderwidth, 10, Justification::centred, 1, 0.0f);
-    g.drawFittedText(	"v2",  10+xOffset+1*sliderwidth, yOffset, sliderwidth, 10, Justification::centred, 1, 0.0f);
-    g.drawFittedText(	"vio", 20+xOffset+2*sliderwidth, yOffset, sliderwidth, 10, Justification::centred, 1, 0.0f);
-    g.drawFittedText(	"cel", 30+xOffset+3*sliderwidth, yOffset, sliderwidth, 10, Justification::centred, 1, 0.0f);
+    g.drawFittedText("TkNoise:",TKnoiseSliderArea.removeFromLeft(velSliderWidth), Justification::left, 1);
+    TKNoiseSlider1.setBounds(TKnoiseSliderArea.removeFromLeft(velSliderWidth));
+    TKNoiseSlider2.setBounds(TKnoiseSliderArea.removeFromLeft(velSliderWidth));
+    TKNoiseSlider3.setBounds(TKnoiseSliderArea.removeFromLeft(velSliderWidth));
+    
+    auto MNoiseSliderArea = leftPanel.removeFromTop(sliderwidth);
+    g.drawFittedText("MNoise:",MNoiseSliderArea.removeFromLeft(velSliderWidth), Justification::left, 1);
+    MNoiseSlider1.setBounds(MNoiseSliderArea.removeFromLeft(velSliderWidth));
+    MNoiseSlider2.setBounds(MNoiseSliderArea.removeFromLeft(velSliderWidth));
+    MNoiseSlider3.setBounds(MNoiseSliderArea.removeFromLeft(velSliderWidth));
+    
+    
+    int alphaSliderWidth =rightPanel.getWidth()/4;
+    auto alphaSliderLabelArea = rightPanel.removeFromTop(30);
+    g.setFont(18.f);
+    g.drawFittedText("V1", alphaSliderLabelArea.removeFromLeft(alphaSliderWidth), Justification::centred, 1);
+    g.drawFittedText("V2", alphaSliderLabelArea.removeFromLeft(alphaSliderWidth), Justification::centred, 1);
+    g.drawFittedText("Vio", alphaSliderLabelArea.removeFromLeft(alphaSliderWidth), Justification::centred, 1);
+    g.drawFittedText("Cel", alphaSliderLabelArea.removeFromLeft(alphaSliderWidth), Justification::centred, 1);
+    
+    alphaMatrix.setBounds(rightPanel.removeFromTop(sliderheight + sliderwidth*2));
+    
+    filePathLabel.setBounds(bottomBar.removeFromLeft(getWidth()*0.8));
+    filePathLabel.setText("MIDI: "+MidiFilePath, dontSendNotification);
 
-    // noise label...
-    g.setFont(11.f);
-    g.setColour(Colours::black);
-    g.drawFittedText(    "TkNoise:", xOffset, 50+yOffset+sliderheight, sliderwidth, 10, Justification::left, 1, 0.0f);
-    g.drawFittedText(    "MNoise:",  xOffset, 70+yOffset+sliderheight+sliderwidth, sliderwidth, 10, Justification::left, 1, 0.0f);
+    openButton.setBounds(bottomBar.reduced(10));
+
 }
 
 
 void MetroAudioProcessorEditor::resized()
 {
-    // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
+
+
 }
