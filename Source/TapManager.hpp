@@ -4,7 +4,6 @@
 //
 //  Created by Ryan Stables on 24/02/2017.
 //
-//
 
 #ifndef TapManager_hpp
 #define TapManager_hpp
@@ -12,28 +11,14 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "Counter.hpp"
 #include "Tapper.hpp"
+#include "PreloadedMIDI.h"
 #include <vector>
 
 // ------- Todo
-//
-// 1 - get the transformLPC() fn working,
-// 2 - read input tapper notes from file (overwrite output buffer)
-// 4 - load MIDI file from GUI
-// ...
-// ...
-// ...
-//    - the input tapper needs to update the middibuffer now, but do the events in it need to be removed first?
-//    - do some checks to make sure the midi file and numtappers is aligned, or just read numTapers from file.
-//    - currently, the input tapper has to have a note off before the next note on, or it will not update!?
-//    - how can the input/synth pitches be aligned, currently if a note is missed everything is out of sync?
-
-// 1 - implement the LPC model in the transform class
-//      - import alphas from csv file?
-
-// 3 - properly configure the TapGenerator::reset() function
-// 4 - make a UI, where the file path can be set and the tapper params can be adjusted and record can be turned on/off.
-//      - add gain controls for each tapper
-// 5 - upgrade the whole system so everything runs off the imported MIDI file (incl. init tappers)
+// 0 - choose location for output logFile before play is allowed!
+// 1 - read input tapper notes from file (overwrite output buffer)
+// 2 - connect the UI params to alphas/noise vars
+// 3 - make sure everything in the constructor is set using the reset() methods, so when playhead stops, the initial stae resumes.
 //      - allow assignable input tappers (select channel to tap to)
 
 // ----------
@@ -74,9 +59,13 @@ public:
     void updateTappersPitch(int noteNum);
     void setLocalDataPath(String x){localDataPath = x;};
     
+    void setAlpha(int row, int col, double value){alpha[row]->set(col, value);};
+    double getAlpha(int row, int col){return alpha[row]->getUnchecked(col);};
+    
     // public tappers so they can be easily updated by the processor/editor...
     OwnedArray<Tapper>  synthesizedTappers;
     Tapper inputTapper;
+    OwnedArray<Array<double>> alpha; //alpha can be updated by the UI
     
 private:
     
@@ -86,6 +75,7 @@ private:
     void logResults(String);
     double getRandomValue(double std);
     double meanSynthesizedOnsetTime();
+    void readPitchListFromPreloadedArray();
     
     // tappers...
     int numSynthesizedTappers;
@@ -110,12 +100,13 @@ private:
     
     // list of Freqs to feed Tappers...
     OwnedArray<Array<double>> pitchList;
+    PreloadedMIDI preloadedHaydn;
     
     // local data path...
     String localDataPath; // to be fed into the constructor by the processor
     
     // LPC Parameters...
-    OwnedArray<Array<double>> alpha, asynch, asynchAlpha;
+    OwnedArray<Array<double>> asynch, asynchAlpha;
     int     TKInterval   = 22050; /*overwrite these values from host*/
 
     int inputTapAcceptanceWindow, nextWindowThreshold=TKInterval*1.5; //SET THIS PROPERLY!!!

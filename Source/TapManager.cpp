@@ -24,7 +24,10 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     // open the logfile/stream (this will be moved when i create a 'filename' text input)
     Time time;
     
-    File logFile (localDataPath+"savedData.m");
+    File logFile = File::getSpecialLocation(File::userDocumentsDirectory).getChildFile("logFile.txt");
+    
+//    File logFile (localDataPath+"savedData.m");
+    
     logFile.appendText("%% ----------------------------\n%% "+time.getCurrentTime().toString(true, true)+"\n");
     logFile.appendText("fs = "+String(fs)+";\n");
     logFile.appendText("numTappers = "+String(NumTappers)+";\n");
@@ -38,10 +41,10 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     // to be loaded in from external file or UI
     double tempAlphas[4][4] =
     {
-        {   0,   0,  0,  0},
-        {0.75,   0,  0,  0},
-        {0.75,   0,  0,  0},
-        {0.75,   0,  0,  0}
+        {  0,   0,  0,  0},
+        {0.25,   0,  0,  0},
+        {0.25,   0,  0,  0},
+        {0.25,   0,  0,  0}
     };
     
     // init alpha and [t(n-1,i)-t(n-1,j)]..
@@ -72,6 +75,8 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
         synthesizedTappers[i]->updateParameters(i+1 /*ID*/, i+2 /*channel*/, pitch /*freq*/, 22050 /*noteLen*/, 44100 /*interval*/, 127 /*velocity*/);
     }
     
+    // initialise pitch list...
+    readPitchListFromPreloadedArray();
 
     logFile.appendText("\n% Trial: "+String(trialNum.inSamples())+"\n");
     logFile.appendText("x_0 = [\n");
@@ -116,8 +121,10 @@ double TapGenerator::getRandomValue(double std)
 
 void TapGenerator::readPitchListFromMidiSeq(const OwnedArray<MidiMessageSequence> &inputMIDISeq)
 {
-    int numTracks = inputMIDISeq.size();
+    // remove what was already in the list...
+    pitchList.clear();
     
+    int numTracks = inputMIDISeq.size();
     for (int trackNum=0; trackNum < numTracks; trackNum++)
     {
         pitchList.add(new Array<double>);
@@ -129,12 +136,29 @@ void TapGenerator::readPitchListFromMidiSeq(const OwnedArray<MidiMessageSequence
             if(tempEventHolder->message.isNoteOn())
             {
                 double pitch = tempEventHolder->message.getNoteNumber();
+                int channel = tempEventHolder->message.getChannel();
+                Logger::outputDebugString(String(channel)+", "+String(pitch)+";");
                 pitchList[trackNum]->add(pitch);
             }
         }
     }
 }
 
+void TapGenerator::readPitchListFromPreloadedArray()
+{
+    // remove anything currently in the pitch List
+    pitchList.clear();
+    
+    for (int trackNum=0; trackNum < preloadedHaydn.numChannels; trackNum++)
+    {
+        pitchList.add(new Array<double>);
+        for (int eventNum=0; eventNum<preloadedHaydn.numEventsPerChannel; eventNum++)
+        {
+            int pitch = preloadedHaydn.pitchList[trackNum][eventNum];
+            pitchList[trackNum]->add(pitch);
+        }
+    }
+}
 
 void TapGenerator::printPitchList()
 {
@@ -272,7 +296,12 @@ void TapGenerator::transformNoise(int randWindowMs)
 
 
 void TapGenerator::transformLPC()
-{   // Todo- load alpha from csv file, and noise vars in GUI
+{
+ 
+    // DEBUG ---------------------
+    for (int i=0; i<4; i++)
+        Logger::outputDebugString(String(alpha[i]->getUnchecked(0))+", "+String(alpha[i]->getUnchecked(1))+", "+String(alpha[i]->getUnchecked(2))+", "+String(alpha[i]->getUnchecked(3)));
+    // DEBUG ---------------------
     
     Array<double> t, sigmaM, sigmaT,     /* onset times and noise params */
                   TkNoise, MotorNoise, MotorNoisePrev, Hnoise;  /* noise vars */

@@ -24,25 +24,25 @@ class AlphaSquare    : public Component
 public:
     AlphaSquare()
     {
-        addRotarySlider(b11);
-        addRotarySlider(b12);
-        addRotarySlider(b13);
-        addRotarySlider(b14);
+        addRotarySlider(b11, 0.f);
+        addRotarySlider(b12, 0.f);
+        addRotarySlider(b13, 0.f);
+        addRotarySlider(b14, 0.f);
         
-        addRotarySlider(b21);
-        addRotarySlider(b22);
-        addRotarySlider(b23);
-        addRotarySlider(b24);
+        addRotarySlider(b21, 0.25);
+        addRotarySlider(b22, 0.f);
+        addRotarySlider(b23, 0.f);
+        addRotarySlider(b24, 0.f);
         
-        addRotarySlider(b31);
-        addRotarySlider(b32);
-        addRotarySlider(b33);
-        addRotarySlider(b34);
+        addRotarySlider(b31, 0.25);
+        addRotarySlider(b32, 0.f);
+        addRotarySlider(b33, 0.f);
+        addRotarySlider(b34, 0.f);
         
-        addRotarySlider(b41);
-        addRotarySlider(b42);
-        addRotarySlider(b43);
-        addRotarySlider(b44);
+        addRotarySlider(b41, 0.25);
+        addRotarySlider(b42, 0.f);
+        addRotarySlider(b43, 0.f);
+        addRotarySlider(b44, 0.f);
     }
     
     ~AlphaSquare()
@@ -50,12 +50,12 @@ public:
     }
     
     
-    void addRotarySlider(Slider &s)
+    void addRotarySlider(Slider &s, double value)
     {
         // init the rotary TK/M noise sliders...
         addAndMakeVisible(s);
         s.setRange(0.0, 1.0, 0.0001);
-        s.setValue(0.0);
+        s.setValue(value);
         s.setSliderStyle(Slider::Rotary);
         // text box...
         s.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, false, s.getTextBoxWidth(), s.getTextBoxHeight());
@@ -100,11 +100,11 @@ public:
         b44.setBounds(r.reduced(indent));
     }
     
-    Slider     b11{"1,1"}, b12{"1,2"}, b13{"1,3"}, b14{"1,4"},
-    b21{"2,1"}, b22{"2,2"}, b23{"2,3"}, b24{"2,4"},
-    b31{"3,1"}, b32{"3,2"}, b33{"3,3"}, b34{"3,4"},
-    b41{"4,1"}, b42{"4,2"}, b43{"4,3"}, b44{"4,4"};
-    
+    Slider  b11{"1,1"}, b12{"1,2"}, b13{"1,3"}, b14{"1,4"},
+            b21{"2,1"}, b22{"2,2"}, b23{"2,3"}, b24{"2,4"},
+            b31{"3,1"}, b32{"3,2"}, b33{"3,3"}, b34{"3,4"},
+            b41{"4,1"}, b42{"4,2"}, b43{"4,3"}, b44{"4,4"};
+            
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AlphaSquare);
 };

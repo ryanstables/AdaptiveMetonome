@@ -260,7 +260,7 @@ void MetroAudioProcessor::prepareToPlay (double newSampleRate, int samplesPerBlo
     }
     
     // update the piches in the tapManager based on the midi file...
-    tapManager->readPitchListFromMidiSeq(inputMIDISeq);
+    //    tapManager->readPitchListFromMidiSeq(inputMIDISeq);
 
     // update sampleRate for synth...
     synth.setCurrentPlaybackSampleRate (newSampleRate);

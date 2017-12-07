@@ -12,7 +12,6 @@
 #include "PluginEditor.h"
 
 
-
 //==============================================================================
 MetroAudioProcessorEditor::MetroAudioProcessorEditor (MetroAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p)
@@ -52,7 +51,26 @@ MetroAudioProcessorEditor::MetroAudioProcessorEditor (MetroAudioProcessor& p)
     
     // alpha sub-component...
     addAndMakeVisible(alphaMatrix);
-    
+    alphaMatrix.b11.addListener(this);
+    alphaMatrix.b12.addListener(this);
+    alphaMatrix.b13.addListener(this);
+    alphaMatrix.b14.addListener(this);
+    // -----
+    alphaMatrix.b21.addListener(this);
+    alphaMatrix.b22.addListener(this);
+    alphaMatrix.b23.addListener(this);
+    alphaMatrix.b24.addListener(this);
+    // -----
+    alphaMatrix.b31.addListener(this);
+    alphaMatrix.b32.addListener(this);
+    alphaMatrix.b33.addListener(this);
+    alphaMatrix.b34.addListener(this);
+    // -----
+    alphaMatrix.b41.addListener(this);
+    alphaMatrix.b42.addListener(this);
+    alphaMatrix.b43.addListener(this);
+    alphaMatrix.b44.addListener(this);
+
     //start the timer (every 25ms)...
     startTimer(25);
 }
@@ -155,6 +173,76 @@ void MetroAudioProcessorEditor::sliderValueChanged(Slider *s)
     {
         processor.updateSynthTapperTKNoise(2, TKNoiseSlider2.getValue());
     }
+    /*
+     Update the alpha params here ------------------
+     */
+    else if(s == &(alphaMatrix.b11))
+    {
+        processor.tapManager->setAlpha(0, 0, alphaMatrix.b11.getValue());
+    }
+    else if(s == &(alphaMatrix.b12))
+    {
+        processor.tapManager->setAlpha(0, 1, alphaMatrix.b12.getValue());
+    }
+    else if(s == &(alphaMatrix.b13))
+    {
+        processor.tapManager->setAlpha(0, 2, alphaMatrix.b13.getValue());
+    }
+    else if(s == &(alphaMatrix.b14))
+    {
+        processor.tapManager->setAlpha(0, 3, alphaMatrix.b14.getValue());
+    }
+    // -------------------
+    else if(s == &(alphaMatrix.b21))
+    {
+        processor.tapManager->setAlpha(1, 0, alphaMatrix.b21.getValue());
+    }
+    else if(s == &(alphaMatrix.b22))
+    {
+        processor.tapManager->setAlpha(1, 1, alphaMatrix.b22.getValue());
+    }
+    else if(s == &(alphaMatrix.b23))
+    {
+        processor.tapManager->setAlpha(1, 2, alphaMatrix.b23.getValue());
+    }
+    else if(s == &(alphaMatrix.b24))
+    {
+        processor.tapManager->setAlpha(1, 3, alphaMatrix.b24.getValue());
+    }
+    // -------------------
+    else if(s == &(alphaMatrix.b31))
+    {
+        processor.tapManager->setAlpha(2, 0, alphaMatrix.b31.getValue());
+    }
+    else if(s == &(alphaMatrix.b32))
+    {
+        processor.tapManager->setAlpha(2, 1, alphaMatrix.b32.getValue());
+    }
+    else if(s == &(alphaMatrix.b33))
+    {
+        processor.tapManager->setAlpha(2, 2, alphaMatrix.b33.getValue());
+    }
+    else if(s == &(alphaMatrix.b34))
+    {
+        processor.tapManager->setAlpha(2, 3, alphaMatrix.b34.getValue());
+    }
+    // -------------------
+    else if(s == &(alphaMatrix.b41))
+    {
+        processor.tapManager->setAlpha(3, 0, alphaMatrix.b41.getValue());
+    }
+    else if(s == &(alphaMatrix.b42))
+    {
+        processor.tapManager->setAlpha(3, 1, alphaMatrix.b42.getValue());
+    }
+    else if(s == &(alphaMatrix.b43))
+    {
+        processor.tapManager->setAlpha(3, 2, alphaMatrix.b43.getValue());
+    }
+    else if(s == &(alphaMatrix.b44))
+    {
+        processor.tapManager->setAlpha(3, 3, alphaMatrix.b44.getValue());
+    }
 }
 
 
@@ -170,6 +258,28 @@ void MetroAudioProcessorEditor::timerCallback()
     TKNoiseSlider1.setValue(*processor.TKNoiseParam1, dontSendNotification);
     TKNoiseSlider2.setValue(*processor.TKNoiseParam2, dontSendNotification);
     TKNoiseSlider3.setValue(*processor.TKNoiseParam3, dontSendNotification);
+    
+    
+    // alpha params from processor...
+    alphaMatrix.b11.setValue(processor.tapManager->getAlpha(0, 0), dontSendNotification);
+    alphaMatrix.b12.setValue(processor.tapManager->getAlpha(0, 1), dontSendNotification);
+    alphaMatrix.b13.setValue(processor.tapManager->getAlpha(0, 2), dontSendNotification);
+    alphaMatrix.b14.setValue(processor.tapManager->getAlpha(0, 3), dontSendNotification);
+    // ------
+    alphaMatrix.b21.setValue(processor.tapManager->getAlpha(1, 0), dontSendNotification);
+    alphaMatrix.b22.setValue(processor.tapManager->getAlpha(1, 1), dontSendNotification);
+    alphaMatrix.b23.setValue(processor.tapManager->getAlpha(1, 2), dontSendNotification);
+    alphaMatrix.b24.setValue(processor.tapManager->getAlpha(1, 3), dontSendNotification);
+    // ------
+    alphaMatrix.b31.setValue(processor.tapManager->getAlpha(2, 0), dontSendNotification);
+    alphaMatrix.b32.setValue(processor.tapManager->getAlpha(2, 1), dontSendNotification);
+    alphaMatrix.b33.setValue(processor.tapManager->getAlpha(2, 2), dontSendNotification);
+    alphaMatrix.b34.setValue(processor.tapManager->getAlpha(2, 3), dontSendNotification);
+    // ------
+    alphaMatrix.b41.setValue(processor.tapManager->getAlpha(3, 0), dontSendNotification);
+    alphaMatrix.b42.setValue(processor.tapManager->getAlpha(3, 1), dontSendNotification);
+    alphaMatrix.b43.setValue(processor.tapManager->getAlpha(3, 2), dontSendNotification);
+    alphaMatrix.b44.setValue(processor.tapManager->getAlpha(3, 3), dontSendNotification);
 }
 
 

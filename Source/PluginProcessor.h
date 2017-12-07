@@ -78,7 +78,9 @@ public:
     void updateSynthTapperTKNoise(int tapperNum, float noiseInMs);
     
     int getNumTappers(){return numSynthesizedTappers;};
-    
+
+    ScopedPointer<TapGenerator>  tapManager; // this can be edited by the UI
+
 private:
     // MIDI Input Data...
     File inputmidifile;
@@ -87,7 +89,6 @@ private:
     // tappers...
     int numSynthesizedTappers    = 3;
     int numInputTappers          = 1;
-    ScopedPointer<TapGenerator>  tapManager;
     
     bool tappersAlreadyAllocated = false, bpmAlreadyAllocated = false;
     Counter globalCounter, frameCounter;

@@ -31,9 +31,11 @@ void Tapper::reset()
     globalBeatNumber = 0;
     nextOnsetTime    = interval;
     
+    setChannel(1);
     setNoteLen(256);          // in samples
     setVel(127);              // in MidiNotes
     setFreq(60);              // ...
+    setID(1);
     
     // reset all the counters...
     countdownToOffset.reset();
@@ -41,6 +43,7 @@ void Tapper::reset()
     prevOnsetTime.reset();
     numberOfNoteOns.reset();
     numberOfNoteOffs.reset();
+    noteActive = false;
 }
 
 void Tapper::turnNoteOn(MidiBuffer &midiMessages, int sampleNo, Counter globalCounter, int beatNumber, bool updateMidiInOutputBuffer)
@@ -89,17 +92,8 @@ void Tapper::kill(MidiBuffer &midiMessages)
 
 bool Tapper::requiresNoteOn(Counter inputCounter)
 {
-//    if(inputCounter.inSamples()%interval==0 && inputCounter.inSamples() && !noteActive)
     if(inputCounter.inSamples()==nextOnsetTime && inputCounter.inSamples() && !noteActive)
-    {
-        // Debugging --------------------------
-        //        Logger::outputDebugString("--globalCounter: "+String(inputCounter.inSamples()));
-        //        Logger::outputDebugString("--interval: "+String(interval));
-        //        Logger::outputDebugString("----nextOnsetTime: "+String(nextOnsetTime));
-        // Debugging --------------------------
-        
         return true;
-    }
     else
         return false;
 }
