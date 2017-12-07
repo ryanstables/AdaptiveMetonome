@@ -1,37 +1,53 @@
 clear;clc
 
 % Prev onsets and TK interval...
-t(1) = 335744;
-t(2) = 374850;
-t(3) = 374850;
-t(4) = 374850;
+t(1) = 0;
+t(2) = 500;
+t(3) = 100;
+t(4) = 0;
 TkInterval = 500;
 
 % Correction gains...
-alphas = [ 
+% alphas = [ 
            0,  0,  0, 0; 
           .5,  0,  0, 0; 
           .5,  0,  0, 0; 
           .5,  0,  0, 0
          ];
 
+% alphas = [ 
+%            0,  0.25,  0.25, 0.25; 
+%            0,  0,  0, 0; 
+%            0,  0,  0, 0; 
+%            0,  0,  0, 0
+%          ];
+     
+     
+     
 % Noise... 
 Mprev = [0;0;0;0]; %[10;10;10;10];
-sigmaM = [2;0;0;0]; %[10; 10; 10; 10];
-sigmaT = [2;0;0;0]; %[25;25;25;25];
+sigmaM = [1;1;1;1]; %[10; 10; 10; 10];
+sigmaT = [1;1;1;1]; %[25;25;25;25];
 
 for i = 1:16
-    t(1) = t(1) * .9; % simulate a tempo change from the input tapper 
+    t(1) = t(1); % simulate a tempo change from the input tapper 
     [tNext(:, i), Mn] = LinearPhaseCorrection(t, TkInterval, Mprev, alphas, sigmaM, sigmaT);
     Mprev = Mn;
 
     %... and repeat...
     t = tNext(:, i);
+    x(:, i) = t;
 end
 
 
 
 c = {'k', 'r', 'b', 'g'};
-for i = 1:length(t)
-    plot(tNext(i, :), i, [c{i} 'd'], 'MarkerSize', 15); hold on; grid on;
+figure()
+for i = 1:size(x, 1)
+    plot(diff(x(i, :)), ['-x',c{i}],'LineWidth', 3);     
+    hold on; grid on;
 end
+title('IOI Correction');
+legend('p1', 'p2', 'p3', 'p4');
+ylabel('mean IOI (s)');
+xlabel('Event Num');
