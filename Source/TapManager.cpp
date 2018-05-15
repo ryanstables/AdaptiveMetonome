@@ -87,7 +87,7 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
 TapGenerator::~TapGenerator()
 {
     // Write to the the end of the file...
-    captainsLog->writeText("];\n%% ----------------------------\n\n", false, false);
+    captainsLog->writeString("];\n%% ----------------------------\n\n");
     captainsLog->flush();
 }
 
@@ -107,7 +107,7 @@ void TapGenerator::reset()
     nextWindowThreshold=TKInterval*1.5;
     // Write results to the the end of the file...
     trialNum.iterate();
-    captainsLog->writeText("];\n\n% Trial: "+String(trialNum.inSamples())+"\nx_"+String(trialNum.inSamples())+"=[\n", false, false);
+    captainsLog->writeString("];\n\n% Trial: "+String(trialNum.inSamples())+"\nx_"+String(trialNum.inSamples())+"=[\n");
     captainsLog->flush();
 }
 
@@ -369,12 +369,12 @@ void TapGenerator::logResults(String inputString)
         inputOnsetTime = String(inputTapper.getOnsetTime());
     }
     
-    captainsLog->writeText(inputOnsetTime, false, false);
+    captainsLog->writeString(inputOnsetTime);
     for (int i=0; i<numSynthesizedTappers; i++)
     {
-        captainsLog->writeText(" "+String(synthesizedTappers[i]->getOnsetTime()), false, false);
+        captainsLog->writeString(" "+String(synthesizedTappers[i]->getOnsetTime()));
     }
-    captainsLog->writeText(";\n", false, false);
+    captainsLog->writeString(";\n");
 }
 
 
