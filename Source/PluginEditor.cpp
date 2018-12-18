@@ -27,7 +27,6 @@ MetroAudioProcessorEditor::MetroAudioProcessorEditor (MetroAudioProcessor& p)
     // set the window size...
     setSize (width, height);
     
-    
     //add the openFile button and label...
     MidiFilePath = processor.LocalDataPath+processor.midiFileName;
     addAndMakeVisible(filePathLabel);

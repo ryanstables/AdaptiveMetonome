@@ -23,8 +23,16 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     
     // open the logfile/stream (this will be moved when i create a 'filename' text input)
     Time time;
+    time = time.getCurrentTime();
     
-    File logFile = File::getSpecialLocation(File::userDocumentsDirectory).getChildFile("logFile.txt");
+    File logFile = File::getSpecialLocation(File::userDocumentsDirectory)
+    .getChildFile("Log_"+
+                  String(time.getHours()) + "-" +
+                  String(time.getMinutes()) + "-" +
+                  String(time.getSeconds()) + "_" +
+                  String(time.getDayOfMonth()) +
+                  time.getMonthName(true) +
+                  String(time.getYear()) + ".txt");
     
 //    File logFile (localDataPath+"savedData.m");
     

@@ -40,11 +40,9 @@ MetroAudioProcessor::MetroAudioProcessor()
     addParameter(velParam1 = new AudioParameterInt("synthVel1", "Vel of synth Tapper 1", 0, 127, 127));
     addParameter(velParam2 = new AudioParameterInt("synthVel2", "Vel of synth Tapper 2", 0, 127, 127));
     addParameter(velParam3 = new AudioParameterInt("synthVel3", "Vel of synth Tapper 3", 0, 127, 127));
-
     addParameter(TKNoiseParam1 = new AudioParameterFloat("synthTKNoise1", "TKNoise of synth Tapper 1", 0, 50, 0));
     addParameter(TKNoiseParam2 = new AudioParameterFloat("synthTKNoise2", "TKNoise of synth Tapper 2", 0, 50, 0));
     addParameter(TKNoiseParam3 = new AudioParameterFloat("synthTKNoise3", "TKNoise of synth Tapper 3", 0, 50, 0));
-
 }
 
 
@@ -57,8 +55,9 @@ MetroAudioProcessor::~MetroAudioProcessor()
 void MetroAudioProcessor::updateMIDIFile(String midiInputString)
 {
     //clear MIDISeq buffers...
-    for (int i=0; i<inputMIDISeq.size(); i++)
+    for (int i=0; i<inputMIDISeq.size(); i++) {
         inputMIDISeq[i]->clear();
+    }
     inputMIDISeq.clear();
     
     Logger::outputDebugString("in Processor: "+midiInputString+" has been loaded");
