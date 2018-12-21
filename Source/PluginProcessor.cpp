@@ -26,8 +26,10 @@ MetroAudioProcessor::MetroAudioProcessor()
 #endif
 {
     // read MIDI file into a stream...
-    updateMIDIFile(LocalDataPath+midiFileName);
-    //    printMIDIMessages();
+    File currentMidiFile(LocalDataPath+midiFileName);
+    if (currentMidiFile.exists()) {
+        updateMIDIFile(LocalDataPath+midiFileName);
+    }
     
     // init the synth...
     const int numVoices = 8;
@@ -102,7 +104,6 @@ void MetroAudioProcessor::updateMIDIFile(String midiInputString)
 void MetroAudioProcessor::printMIDIMessages()
 {
     Logger::outputDebugString("File: "+inputmidifile.getFileName()+"..............");
-    
     int numTracks = inputMIDISeq.size();
     for (int trackNum=0; trackNum < numTracks; trackNum++)
     {
@@ -195,7 +196,6 @@ void MetroAudioProcessor::updateInputTapperVelocity(int vel)
 }
 
 
-
 void MetroAudioProcessor::updateSynthTapperTKNoise(int tapperNum, float noiseInMs)
 {
     if (tapperNum==0)
@@ -278,8 +278,6 @@ bool MetroAudioProcessor::bpmValueChanged()
         return false;
     }
 }
-
-
 
 //==============================================================================
 //========= Process Block ======================================================

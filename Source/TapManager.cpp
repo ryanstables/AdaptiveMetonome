@@ -32,14 +32,14 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
                   String(time.getSeconds()) + "_" +
                   String(time.getDayOfMonth()) +
                   time.getMonthName(true) +
-                  String(time.getYear()) + ".txt");
+                  String(time.getYear()) + ".csv");
     
 //    File logFile (localDataPath+"savedData.m");
     
-    logFile.appendText("%% ----------------------------\n%% "+time.getCurrentTime().toString(true, true)+"\n");
-    logFile.appendText("fs = "+String(fs)+";\n");
-    logFile.appendText("numTappers = "+String(NumTappers)+";\n");
-        
+//    logFile.appendText("%% ----------------------------\n%% "+time.getCurrentTime().toString(true, true)+"\n");
+//    logFile.appendText("fs = "+String(fs)+";\n");
+//    logFile.appendText("numTappers = "+String(NumTappers)+";\n");
+    
     // allocate the tappers...
     for (int i=0; i<numSynthesizedTappers; i++)
     {
@@ -86,16 +86,17 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     // initialise pitch list...
     readPitchListFromPreloadedArray();
 
-    logFile.appendText("\n% Trial: "+String(trialNum.inSamples())+"\n");
-    logFile.appendText("x_0 = [\n");
+//    logFile.appendText("\n% Trial: "+String(trialNum.inSamples())+"\n");
+//    logFile.appendText("x_0 = [\n");
     // to stream text to the log file whilst tapping...
+    logFile.appendText("Input (V1), Violin 2, Viola, Cello \n");
     captainsLog = new FileOutputStream (logFile);
 }
 
 TapGenerator::~TapGenerator()
 {
     // Write to the the end of the file...
-    captainsLog->writeString("];\n%% ----------------------------\n\n");
+//    captainsLog->writeString("];\n%% ----------------------------\n\n");
     captainsLog->flush();
 }
 
@@ -115,7 +116,8 @@ void TapGenerator::reset()
     nextWindowThreshold=TKInterval*1.5;
     // Write results to the the end of the file...
     trialNum.iterate();
-    captainsLog->writeString("];\n\n% Trial: "+String(trialNum.inSamples())+"\nx_"+String(trialNum.inSamples())+"=[\n");
+//    captainsLog->writeString("];\n\n% Trial: "+String(trialNum.inSamples())+"\nx_"+String(trialNum.inSamples())+"=[\n");
+    captainsLog->writeString(" , , , \n");
     captainsLog->flush();
 }
 
@@ -308,7 +310,10 @@ void TapGenerator::transformLPC()
  
     // DEBUG ---------------------
     for (int i=0; i<4; i++)
-        Logger::outputDebugString(String(alpha[i]->getUnchecked(0))+", "+String(alpha[i]->getUnchecked(1))+", "+String(alpha[i]->getUnchecked(2))+", "+String(alpha[i]->getUnchecked(3)));
+        Logger::outputDebugString(String(alpha[i]->getUnchecked(0))+", "
+                                  +String(alpha[i]->getUnchecked(1))+", "
+                                  +String(alpha[i]->getUnchecked(2))+", "
+                                  +String(alpha[i]->getUnchecked(3)));
     // DEBUG ---------------------
     
     Array<double> t, sigmaM, sigmaT,     /* onset times and noise params */
@@ -364,25 +369,29 @@ void TapGenerator::transformLPC()
     }
 }
 
-
 void TapGenerator::logResults(String inputString)
 {
     // write to terminal
     Logger::outputDebugString(inputString);
     
-    String inputOnsetTime = "NaN ";
+    String inputOnsetTime = "NaN";
     
     if (userInputDetected)
     {
-        inputOnsetTime = String(inputTapper.getOnsetTime());
+        inputOnsetTime = String(inputTapper.getOnsetTime() / fs);
     }
     
-    captainsLog->writeString(inputOnsetTime);
+    captainsLog->writeString(inputOnsetTime + ", ");
     for (int i=0; i<numSynthesizedTappers; i++)
     {
-        captainsLog->writeString(" "+String(synthesizedTappers[i]->getOnsetTime()));
+//        captainsLog->writeString(" "+String(synthesizedTappers[i]->getOnsetTime()));
+        if(i < numSynthesizedTappers-1) {
+            captainsLog->writeString(String(synthesizedTappers[i]->getOnsetTime() / fs) + ", ");
+        } else {
+            captainsLog->writeString(String(synthesizedTappers[i]->getOnsetTime() / fs));
+        }
     }
-    captainsLog->writeString(";\n");
+    captainsLog->writeString("\n");
 }
 
 

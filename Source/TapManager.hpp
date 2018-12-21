@@ -15,7 +15,6 @@
 #include <vector>
 
 // ------- Todo
-// 0 - choose location for output logFile before play is allowed!
 // 1 - read input tapper notes from file (overwrite output buffer)
 // 2 - connect the UI params to alphas/noise vars
 // 3 - make sure everything in the constructor is set using the reset() methods, so when playhead stops, the initial stae resumes.
