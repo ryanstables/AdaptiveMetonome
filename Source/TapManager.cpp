@@ -85,11 +85,10 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     
     // initialise pitch list...
     readPitchListFromPreloadedArray();
-
-//    logFile.appendText("\n% Trial: "+String(trialNum.inSamples())+"\n");
-//    logFile.appendText("x_0 = [\n");
-    // to stream text to the log file whilst tapping...
-    logFile.appendText("Input (V1), Violin 2, Viola, Cello \n");
+    
+    logFile.appendText("Input (V1), Violin 2, Viola, Cello");
+//    logFile.appendText("N, Input (V1), Violin 2, Viola, Cello, , v1 Int, v2 Int, vi Int, Ce Int, , v1 MVar, v2 MVar, vi MVar, ce MVar, ,v1 TKVar, v2 TKVar, vi TKVar, ce TKVar, , Alpha 11, Alpha 12, Alpha 13, Alpha 14, Alpha 21, Alpha 22, Alpha 23, Alpha 24, Alpha 31, Alpha 32, Alpha 33, Alpha 34, Alpha 41, Alpha 42, Alpha 43, Alpha 44, , Async 11, Async 12, Async 13, Async 14, Async 21, Async 22, Async 23, Async 24, Async 31, Async 32, Async 33, Async 34, Async 41, Async 42, Async 43, Async 44   \n");
+    
     captainsLog = new FileOutputStream (logFile);
 }
 
@@ -116,7 +115,6 @@ void TapGenerator::reset()
     nextWindowThreshold=TKInterval*1.5;
     // Write results to the the end of the file...
     trialNum.iterate();
-//    captainsLog->writeString("];\n\n% Trial: "+String(trialNum.inSamples())+"\nx_"+String(trialNum.inSamples())+"=[\n");
     captainsLog->writeString(" , , , \n");
     captainsLog->flush();
 }
@@ -199,14 +197,15 @@ void TapGenerator::updateInputTapper(MidiBuffer &midiMessages, Counter globalCou
             if(
                result.isNoteOn() && // if the incoming event is a noteOn
                inputTapper.getChannel() == result.getChannel() && // and it is from this channel
-               !userInputDetected // and no other noteOn event has been logged...
+               !userInputDetected // and no other noteOn event has been logged during this window...
                )
             {
                 // update pitch of input tapper...
                 int currentEventNum = inputTapper.numberOfNoteOffs.inSamples();
                 if(currentEventNum < pitchList[0]->size())
+                {
                     inputTapper.setFreq(pitchList[0]->getUnchecked(currentEventNum));
-                
+                }
                 // clear noteOn and replace with new pitch here...
                 
                 inputTapper.turnNoteOn(midiMessages, samplePos, globalCounter, beatNumber, false);
@@ -316,13 +315,21 @@ void TapGenerator::transformLPC()
                                   +String(alpha[i]->getUnchecked(3)));
     // DEBUG ---------------------
     
-    Array<double> t, sigmaM, sigmaT,     /* onset times and noise params */
-                  TkNoise, MotorNoise, MotorNoisePrev, Hnoise;  /* noise vars */
-    
-    t.add(inputTapper.getOnsetTime()); // ...first add the input tapper
-    MotorNoisePrev.add(inputTapper.MNoisePrevValue);
-    sigmaM.add(inputTapper.getMNoiseStdInSamples(fs));
-    sigmaT.add(inputTapper.getTKNoiseStdInSamples(fs));
+    Array<double> t, sigmaM, sigmaT, MotorNoisePrev,    /* onset times and noise params */
+                  TkNoise, MotorNoise, Hnoise;          /* new noise vars */
+    if(userInputDetected) {
+        t.add(inputTapper.getOnsetTime()); // ...first add the input tapper
+        MotorNoisePrev.add(inputTapper.MNoisePrevValue);
+        sigmaM.add(inputTapper.getMNoiseStdInSamples(fs));
+        sigmaT.add(inputTapper.getTKNoiseStdInSamples(fs));
+    } else {
+        // if no input tap happens, we can still apply a transformation to the syntehsized
+        // tappers by cancelling out the asynchrony of the input tapper...
+        t.add(inputTapper.getPrevOnsetTime() + inputTapper.getInterval());
+        MotorNoisePrev.add(0.f);
+        sigmaM.add(0.f);
+        sigmaT.add(0.f);
+    }
     for (int tapper=0; tapper<numSynthesizedTappers; tapper++) // ...then the synth tappers
     {
         t.add(synthesizedTappers[tapper]->getOnsetTime());
@@ -331,18 +338,24 @@ void TapGenerator::transformLPC()
         sigmaT.add(synthesizedTappers[tapper]->getTKNoiseStdInSamples(fs));
     }
   
-    // calculate noise vars for all tappers...
+    // apply the actual transformation...
     for (int i=0; i<t.size(); i++)
     {
+        // update the noise params for each tapper
         TkNoise.add(getRandomValue(sigmaT[i]));
         MotorNoise.add(getRandomValue(sigmaM[i]));
         Hnoise.add(TkNoise[i] + MotorNoise[i] - MotorNoisePrev[i]);
-
-        
+        // apply the LPC model usig the gains and noise...
         double sumAsync = 0;
         for (int j=0; j<t.size(); j++)
         {
-            asynch[i]->set(j, t[i] - t[j]);
+            if(j==0 && !userInputDetected)
+            {
+                asynch[i]->set(j, 0); // no asynch if tap didn't happen.
+            } else {
+                asynch[i]->set(j, t[i] - t[j]);
+            }
+            
             asynchAlpha[i]->set(j, alpha[i]->getUnchecked(j) * asynch[i]->getUnchecked(j));
             sumAsync += asynchAlpha[i]->getUnchecked(j);
         }
@@ -355,14 +368,8 @@ void TapGenerator::transformLPC()
         else
         {   // update the next tap time for tapper i...
             synthesizedTappers[i-1]->setInterval(TKInterval - sumAsync + Hnoise[i]);
-            
-            int onsetTime   = t[i],
-                noise       = Hnoise[i],
-                nextOnset   = onsetTime + TKInterval - sumAsync + noise;
-
-            synthesizedTappers[i-1]->setNextOnsetTime(nextOnset); // to be replaced with "nextOnset"
-            // synthesizedTappers[i-1]->setNextOnsetTime(onsetTime + TKInterval); // ...debugging
-            
+            int nextOnset   = t[i] + TKInterval - sumAsync + Hnoise[i];
+            synthesizedTappers[i-1]->setNextOnsetTime(nextOnset);
             // update motor noise...
             synthesizedTappers[i-1]->MNoisePrevValue = MotorNoise[i];
         }
@@ -371,20 +378,27 @@ void TapGenerator::transformLPC()
 
 void TapGenerator::logResults(String inputString)
 {
-    // write to terminal
+//    CSV structure ------
+// N, Input (V1), Violin 2, Viola, Cello, ,
+// v1 Int, v2 Int, vi Int, Ce Int, ,
+// v1 MVar, v2 MVar, vi MVar, ce MVar, ,
+// v1 TKVar, v2 TKVar, vi TKVar, ce TKVar, ,
+// Alpha 11, Alpha 12, Alpha 13, Alpha 14, Alpha 21, Alpha 22, Alpha 23, Alpha 24, Alpha 31, Alpha 32, Alpha 33, Alpha 34, Alpha 41, Alpha 42, Alpha 43, Alpha 44, ,
+// Async 11, Async 12, Async 13, Async 14, Async 21, Async 22, Async 23, Async 24, Async 31, Async 32, Async 33, Async 34, Async 41, Async 42, Async 43, Async 44
+//    CSV structure ------
+
+    // Debugging ---------
     Logger::outputDebugString(inputString);
+    // Debugging ---------
     
     String inputOnsetTime = "NaN";
-    
     if (userInputDetected)
     {
         inputOnsetTime = String(inputTapper.getOnsetTime() / fs);
     }
-    
     captainsLog->writeString(inputOnsetTime + ", ");
     for (int i=0; i<numSynthesizedTappers; i++)
     {
-//        captainsLog->writeString(" "+String(synthesizedTappers[i]->getOnsetTime()));
         if(i < numSynthesizedTappers-1) {
             captainsLog->writeString(String(synthesizedTappers[i]->getOnsetTime() / fs) + ", ");
         } else {
@@ -429,7 +443,6 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
 {
     // update block size from process block...
     frameLen = blockSize;
-    
     // update the input tapper with incoming on/off messages...
     updateInputTapper(midiMessages, globalCounter, beatCounter.inSamples());
     
@@ -450,7 +463,6 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
             {
                 // apply transformation...
                 transformLPC();
-                
                 logResults("Beat ["+String(beatCounter.inSamples())+"], user input ["+String(numberOfInputTaps.inSamples())+"] found");
                 beatCounter.iterate(); // count the number of registered beats
                 updateTapAcceptanceWindow();
@@ -465,13 +477,14 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
 
                 if(globalCounter.inSamples() >= nextWindowThreshold) // ...if the end of the current beatWindow is reached
                 {
-                    for (int synthTapper=0; synthTapper<numSynthesizedTappers; synthTapper++)
-                    {
-                        int lastTapTime = synthesizedTappers[synthTapper]->getOnsetTime();
-                        int interval = synthesizedTappers[synthTapper]->getInterval();
-                        synthesizedTappers[synthTapper]->setNextOnsetTime( lastTapTime + interval);
-                    }
-                        
+                    transformLPC();
+//                    for (int synthTapper=0; synthTapper<numSynthesizedTappers; synthTapper++)
+//                    {
+//                        int lastTapTime = synthesizedTappers[synthTapper]->getOnsetTime();
+//                        int interval = synthesizedTappers[synthTapper]->getInterval();
+//                        synthesizedTappers[synthTapper]->setNextOnsetTime( lastTapTime + interval);
+//                    }
+                    
                     // Recalculate timing params without the user input asnynch...
                     logResults("Beat ["+String(beatCounter.inSamples())+"] threshold reached");
                     updateTapAcceptanceWindow(); //<--- calculate the next window thresh here
