@@ -497,6 +497,7 @@ void TapGenerator::killActiveTappers(MidiBuffer &midiMessages)
 {
     for (int i=0; i<numSynthesizedTappers; i++)
     {
+//        Tapper tempTapper = synthesizedTappers[i];
         if(synthesizedTappers[i]->isActive())
         {
             synthesizedTappers[i]->kill(midiMessages);

@@ -21,12 +21,12 @@
 // - fix bug that prevents some tappers from being turned off
 // - check all alpha/noise parameters are working correctly
 // - transfer all ui params & fs over during preparetoplay
+// - keep recording taps after MIDI flie has stopped
 //
 // 1 - read input tapper notes from file (overwrite output buffer)
 // 2 - connect the UI params to alphas/noise vars
 // 3 - make sure everything in the constructor is set using the reset() methods, so when playhead stops, the initial stae resumes.
 //      - allow assignable input tappers (select channel to tap to)
-
 // ----------
 // tapping workflow...
 // 0 - procesor has a global counter that gets passed into the tapGenerator

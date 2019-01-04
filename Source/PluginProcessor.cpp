@@ -191,10 +191,8 @@ void MetroAudioProcessor::updateInputTapperVelocity(int vel)
     {
         tapManager->inputTapper.setVel(*gainsParam);
     }
-    
     Logger::outputDebugString("Processor (input gain): "+String(*gainsParam));
 }
-
 
 void MetroAudioProcessor::updateSynthTapperTKNoise(int tapperNum, float noiseInMs)
 {
@@ -257,10 +255,8 @@ void MetroAudioProcessor::prepareToPlay (double newSampleRate, int samplesPerBlo
         tapManager = new TapGenerator(numSynthesizedTappers+1, newSampleRate, samplesPerBlock, LocalDataPath);
         tappersAlreadyAllocated = true;
     }
-    
     // update the piches in the tapManager based on the midi file...
     //    tapManager->readPitchListFromMidiSeq(inputMIDISeq);
-
     // update sampleRate for synth...
     synth.setCurrentPlaybackSampleRate (newSampleRate);
 }
@@ -299,7 +295,6 @@ void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& m
         Logger::outputDebugString("global counter: "+String(globalCounter.inSamples()));
         Logger::outputDebugString("BPM changed to: "+String(currentBPM));
     }
-    
     thisBlockPlaying = playhead.isPlaying;
     if (thisBlockPlaying) // ...playhead moving
     {
@@ -309,14 +304,14 @@ void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& m
     }
     else if(!thisBlockPlaying && lastBlockPlaying) // ...playhead just stopped
     {
-        // if the playhead just stopped moving, reset the tapManager...
+        // if the playhead just stopped moving, reset the tapManager and kill all tappers...
+        tapManager->killActiveTappers(midiMessages);
         tapManager->reset();
         globalCounter.reset();
     }
     else // ...playhead not moving
     {
-        // clean up any left-over noteOns...
-        tapManager->killActiveTappers(midiMessages);
+        // tapManager->killActiveTappers(midiMessages);
     }
     
     // send the midi messages to the Synth...
