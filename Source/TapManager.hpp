@@ -15,6 +15,13 @@
 #include <vector>
 
 // ------- Todo
+//
+// Alan -
+// - make output unique csv files (done)
+// - fix bug that prevents some tappers from being turned off
+// - check all alpha/noise parameters are working correctly
+// - transfer all ui params & fs over during preparetoplay
+//
 // 1 - read input tapper notes from file (overwrite output buffer)
 // 2 - connect the UI params to alphas/noise vars
 // 3 - make sure everything in the constructor is set using the reset() methods, so when playhead stops, the initial stae resumes.
