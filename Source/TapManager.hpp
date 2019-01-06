@@ -18,7 +18,6 @@
 //
 // Alan -
 // - make output unique csv files (done)
-// - fix bug that prevents some tappers from being turned off
 // - check all alpha/noise parameters are working correctly
 // - transfer all ui params & fs over during preparetoplay
 // - keep recording taps after MIDI flie has stopped
@@ -68,6 +67,8 @@ public:
     double getAlpha(int row, int col){return alpha[row]->getUnchecked(col);};
     
     // public tappers so they can be easily updated by the processor/editor...
+    
+    int numSynthesizedTappers;
     OwnedArray<Tapper>  synthesizedTappers;
     Tapper inputTapper;
     OwnedArray<Array<double>> alpha; //alpha can be updated by the UI
@@ -81,9 +82,6 @@ private:
     double getRandomValue(double std);
     double meanSynthesizedOnsetTime();
     void readPitchListFromPreloadedArray();
-    
-    // tappers...
-    int numSynthesizedTappers;
     
     std::vector <bool> notesTriggered; // change these to ownedArrays or scopedPointers??
     std::vector <int> prevAsynch;
@@ -100,22 +98,18 @@ private:
     
     // for calculating the moving window of acceptance...
     bool userInputDetected=false;
-    
     ScopedPointer<FileOutputStream> captainsLog; // for logging the results
-    
     // list of Freqs to feed Tappers...
     OwnedArray<Array<double>> pitchList;
     PreloadedMIDI preloadedHaydn;
-    
     // local data path...
     String localDataPath; // to be fed into the constructor by the processor
-    
     // LPC Parameters...
     OwnedArray<Array<double>> asynch, asynchAlpha;
     int     TKInterval   = 22050; /*overwrite these values from host*/
-
     int inputTapAcceptanceWindow, nextWindowThreshold=TKInterval*1.5; //SET THIS PROPERLY!!!
-
+    // Strings for logfile
+    String TKNoiseStr, MNoiseStr, alphaStr, asyncStr;
     
 };
 

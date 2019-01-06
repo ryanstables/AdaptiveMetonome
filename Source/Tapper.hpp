@@ -37,8 +37,9 @@ public:
     double  getMNoiseStdInSamples(double fs){return MNoiseStd/1000.f * fs;};
     double  getTKNoiseStdInSamples(double fs){return TKNoiseStd/1000.f * fs;};
     
-    void setInterval(int x){interval=x;};
+    void setInterval(int x){prevInterval = interval; interval=x;};
     int  getInterval(){return interval;};
+    int  getPrevInterval(){return prevInterval;};
     int  getOnsetTime(){return onsetTime.inSamples();};
     int  getPrevOnsetTime(){return prevOnsetTime.inSamples();};
     void setNextOnsetTime(int x){nextOnsetTime = x;};
@@ -69,7 +70,7 @@ private:
     
     int noteLen, MIDIChannel, tapperID=1,
     tapperFreq=1, tapperVel=1, /*should both be assignable to MIDI*/
-    interval=22050, beatDivision=2,            /*overwrite from host*/
+    interval=22050, prevInterval = 22050, beatDivision=2,            /*overwrite from host*/
     globalBeatNumber = 0,   // inject the beat number from the TapManager to check for valid prevOnsetTimes
     nextOnsetTime;
     

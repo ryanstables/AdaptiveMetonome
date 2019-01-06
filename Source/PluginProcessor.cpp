@@ -42,11 +42,13 @@ MetroAudioProcessor::MetroAudioProcessor()
     addParameter(velParam1 = new AudioParameterInt("synthVel1", "Vel of synth Tapper 1", 0, 127, 127));
     addParameter(velParam2 = new AudioParameterInt("synthVel2", "Vel of synth Tapper 2", 0, 127, 127));
     addParameter(velParam3 = new AudioParameterInt("synthVel3", "Vel of synth Tapper 3", 0, 127, 127));
-    addParameter(TKNoiseParam1 = new AudioParameterFloat("synthTKNoise1", "TKNoise of synth Tapper 1", 0, 50, 0));
-    addParameter(TKNoiseParam2 = new AudioParameterFloat("synthTKNoise2", "TKNoise of synth Tapper 2", 0, 50, 0));
-    addParameter(TKNoiseParam3 = new AudioParameterFloat("synthTKNoise3", "TKNoise of synth Tapper 3", 0, 50, 0));
+    addParameter(TKNoiseParam1 = new AudioParameterFloat("synthTKNoise1", "Time Keeper Noise of synth Tapper 1", 0, 50, 0));
+    addParameter(TKNoiseParam2 = new AudioParameterFloat("synthTKNoise2", "Time Keeper Noise of synth Tapper 2", 0, 50, 0));
+    addParameter(TKNoiseParam3 = new AudioParameterFloat("synthTKNoise3", "Time Keeper Noise of synth Tapper 3", 0, 50, 0));
+    addParameter(MNoiseParam1 = new AudioParameterFloat("synthMNoise1", "Motor Noise of synth Tapper 1", 0, 50, 0));
+    addParameter(MNoiseParam2 = new AudioParameterFloat("synthMNoise2", "Motor Noise of synth Tapper 2", 0, 50, 0));
+    addParameter(MNoiseParam3 = new AudioParameterFloat("synthMNoise3", "Motor Noise of synth Tapper 3", 0, 50, 0));
 }
-
 
 MetroAudioProcessor::~MetroAudioProcessor()
 {
@@ -202,7 +204,6 @@ void MetroAudioProcessor::updateSynthTapperTKNoise(int tapperNum, float noiseInM
         *TKNoiseParam2 = noiseInMs;
     else if (tapperNum==2)
         *TKNoiseParam3 = noiseInMs;
-
     // check tapManager exists...
     if(tappersAlreadyAllocated)
     {
@@ -212,10 +213,27 @@ void MetroAudioProcessor::updateSynthTapperTKNoise(int tapperNum, float noiseInM
                 tapManager->synthesizedTappers[tapper]->TKNoiseStd = noiseInMs;
         }
     }
-    
     Logger::outputDebugString("Processor (synth"+String(tapperNum)+" noise): "+String(tapManager->synthesizedTappers[tapperNum]->TKNoiseStd));
 }
 
+void MetroAudioProcessor::updateSynthTapperMNoise(int tapperNum, float noiseInMs)
+{
+    if (tapperNum==0)
+        *MNoiseParam1 = noiseInMs;
+    else if (tapperNum==1)
+        *MNoiseParam2 = noiseInMs;
+    else if (tapperNum==2)
+        *MNoiseParam3 = noiseInMs;
+    // check tapManager exists...
+    if(tappersAlreadyAllocated)
+    {
+        for (int  tapper = 0; tapper<numSynthesizedTappers; tapper++)
+        {
+            if (tapperNum==tapper)
+                tapManager->synthesizedTappers[tapper]->MNoiseStd = noiseInMs;
+        }
+    }
+}
 
 void MetroAudioProcessor::updatedSynthTapperVelocity(int tapperNum, int vel)
 {
@@ -245,6 +263,16 @@ void MetroAudioProcessor::updatedSynthTapperVelocity(int tapperNum, int vel)
     Logger::outputDebugString("Processor (synth"+String(tapperNum)+" gain): "+String(vel));
 }
 
+void MetroAudioProcessor::transferUIParamsToTappers()
+{
+    tapManager->synthesizedTappers[0]->TKNoiseStd = *TKNoiseParam1;
+    tapManager->synthesizedTappers[1]->TKNoiseStd = *TKNoiseParam2;
+    tapManager->synthesizedTappers[2]->TKNoiseStd = *TKNoiseParam3;
+    tapManager->synthesizedTappers[0]->MNoiseStd = *MNoiseParam1;
+    tapManager->synthesizedTappers[1]->MNoiseStd = *MNoiseParam2;
+    tapManager->synthesizedTappers[2]->MNoiseStd = *MNoiseParam3;
+}
+
 //==============================================================================
 //========= Prepare to Play ====================================================
 //==============================================================================
@@ -253,11 +281,9 @@ void MetroAudioProcessor::prepareToPlay (double newSampleRate, int samplesPerBlo
     if(!tappersAlreadyAllocated) // only allocate the tappers once
     {
         tapManager = new TapGenerator(numSynthesizedTappers+1, newSampleRate, samplesPerBlock, LocalDataPath);
+        transferUIParamsToTappers();
         tappersAlreadyAllocated = true;
     }
-    // update the piches in the tapManager based on the midi file...
-    //    tapManager->readPitchListFromMidiSeq(inputMIDISeq);
-    // update sampleRate for synth...
     synth.setCurrentPlaybackSampleRate (newSampleRate);
 }
 
@@ -307,11 +333,12 @@ void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& m
         // if the playhead just stopped moving, reset the tapManager and kill all tappers...
         tapManager->killActiveTappers(midiMessages);
         tapManager->reset();
+        transferUIParamsToTappers();
         globalCounter.reset();
     }
     else // ...playhead not moving
     {
-        // tapManager->killActiveTappers(midiMessages);
+        
     }
     
     // send the midi messages to the Synth...

@@ -25,9 +25,9 @@ Tapper::~Tapper()
 void Tapper::reset()
 {
     // reset to default vals...
-    TKNoiseStd       = 10;     // 25 ms timekeeper noise
-    MNoiseStd        = 10;     // 10 ms Motor noise
-    MNoisePrevValue  = 0;      // no prev motor noise
+    TKNoiseStd       = 0;
+    MNoiseStd        = 0;
+    MNoisePrevValue  = 0;
     globalBeatNumber = 0;
     nextOnsetTime    = interval;
     
@@ -54,8 +54,9 @@ void Tapper::turnNoteOn(MidiBuffer &midiMessages, int sampleNo, Counter globalCo
         
         onsetTime.set(globalCounter.inSamples()); // updateCurrent onsetTime
         
+        
         // report the noteOn time in samples...
-        printTapTime(globalCounter, "NoteOn");
+        // printTapTime(globalCounter, "NoteOn");
         
         if(updateMidiInOutputBuffer) // this can be set to false so the input tapper doesn't write out midi messages
         {
@@ -94,9 +95,9 @@ bool Tapper::requiresNoteOn(Counter inputCounter)
     if(inputCounter.inSamples()==nextOnsetTime && inputCounter.inSamples() && !noteActive)
     {
         // DEBUG ------------------
-        Logger::outputDebugString("Tapper "+String(getID()));
-        Logger::outputDebugString("nextOnsetTime: "+String(nextOnsetTime));
-        Logger::outputDebugString("inputCounter: "+String(inputCounter.inSamples()));
+//        Logger::outputDebugString("Tapper "+String(getID()));
+//        Logger::outputDebugString("nextOnsetTime: "+String(nextOnsetTime));
+//        Logger::outputDebugString("inputCounter: "+String(inputCounter.inSamples()));
         // DEBUG ------------------
         return true;
     }

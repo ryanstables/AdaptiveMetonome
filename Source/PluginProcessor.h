@@ -72,11 +72,13 @@ public:
     // parameters for the gains and noise...
     AudioParameterInt *gainsParam, *velParam1, *velParam2, *velParam3;
     AudioParameterFloat *TKNoiseParam1, *TKNoiseParam2, *TKNoiseParam3;
+    AudioParameterFloat *MNoiseParam1, *MNoiseParam2, *MNoiseParam3;
     
     void updateInputTapperVelocity(int vel);
     void updatedSynthTapperVelocity(int tapperNum, int vel);
     void updateSynthTapperTKNoise(int tapperNum, float noiseInMs);
-    
+    void updateSynthTapperMNoise(int tapperNum, float noiseInMs);
+    void transferUIParamsToTappers();
     int getNumTappers(){return numSynthesizedTappers;};
 
     ScopedPointer<TapGenerator>  tapManager; // this can be edited by the UI

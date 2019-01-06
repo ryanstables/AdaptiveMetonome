@@ -86,9 +86,8 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     // initialise pitch list...
     readPitchListFromPreloadedArray();
     
-    logFile.appendText("Input (V1), Violin 2, Viola, Cello");
-//    logFile.appendText("N, Input (V1), Violin 2, Viola, Cello, , v1 Int, v2 Int, vi Int, Ce Int, , v1 MVar, v2 MVar, vi MVar, ce MVar, ,v1 TKVar, v2 TKVar, vi TKVar, ce TKVar, , Alpha 11, Alpha 12, Alpha 13, Alpha 14, Alpha 21, Alpha 22, Alpha 23, Alpha 24, Alpha 31, Alpha 32, Alpha 33, Alpha 34, Alpha 41, Alpha 42, Alpha 43, Alpha 44, , Async 11, Async 12, Async 13, Async 14, Async 21, Async 22, Async 23, Async 24, Async 31, Async 32, Async 33, Async 34, Async 41, Async 42, Async 43, Async 44   \n");
-    
+//    logFile.appendText("Input (V1), Violin 2, Viola, Cello");
+    logFile.appendText("N, Input (V1), Violin 2, Viola, Cello, , v1 Int, v2 Int, vi Int, Ce Int, , v1 MVar, v2 MVar, vi MVar, ce MVar, ,v1 TKVar, v2 TKVar, vi TKVar, ce TKVar, , Async 11, Async 12, Async 13, Async 14, Async 21, Async 22, Async 23, Async 24, Async 31, Async 32, Async 33, Async 34, Async 41, Async 42, Async 43, Async 44, , Alpha 11, Alpha 12, Alpha 13, Alpha 14, Alpha 21, Alpha 22, Alpha 23, Alpha 24, Alpha 31, Alpha 32, Alpha 33, Alpha 34, Alpha 41, Alpha 42, Alpha 43, Alpha 44 \n");
     captainsLog = new FileOutputStream (logFile);
 }
 
@@ -144,8 +143,6 @@ void TapGenerator::readPitchListFromMidiSeq(const OwnedArray<MidiMessageSequence
             if(tempEventHolder->message.isNoteOn())
             {
                 double pitch = tempEventHolder->message.getNoteNumber();
-                int channel = tempEventHolder->message.getChannel();
-                Logger::outputDebugString(String(channel)+", "+String(pitch)+";");
                 pitchList[trackNum]->add(pitch);
             }
         }
@@ -235,16 +232,12 @@ void TapGenerator::updateTapAcceptanceWindow()
             currentMean+=(synthesizedTappers[i]->getOnsetTime()/(double)numSynthesizedTappers);
             prevMean+=(synthesizedTappers[i]->getPrevOnsetTime()/(double)numSynthesizedTappers);
         }
-        
         inputTapAcceptanceWindow = currentMean-prevMean;
-//        nextWindowThreshold = currentMean + inputTapAcceptanceWindow / 2;
-//        Logger::outputDebugString("Next Thresh: "+String(nextWindowThreshold)+"\n");
     }
     else
     {
         // this should only happen on the first beat.
         nextWindowThreshold = TKInterval*1.5;
-//        Logger::outputDebugString("Next Thresh: "+String(nextWindowThreshold)+"\n");
     }
 }
 
@@ -306,17 +299,9 @@ void TapGenerator::transformNoise(int randWindowMs)
 
 void TapGenerator::transformLPC()
 {
- 
-    // DEBUG ---------------------
-    for (int i=0; i<4; i++)
-        Logger::outputDebugString(String(alpha[i]->getUnchecked(0))+", "
-                                  +String(alpha[i]->getUnchecked(1))+", "
-                                  +String(alpha[i]->getUnchecked(2))+", "
-                                  +String(alpha[i]->getUnchecked(3)));
-    // DEBUG ---------------------
-    
     Array<double> t, sigmaM, sigmaT, MotorNoisePrev,    /* onset times and noise params */
                   TkNoise, MotorNoise, Hnoise;          /* new noise vars */
+    TKNoiseStr = MNoiseStr = alphaStr = asyncStr = ""; // reset logFile strings
     if(userInputDetected) {
         t.add(inputTapper.getOnsetTime()); // ...first add the input tapper
         MotorNoisePrev.add(inputTapper.MNoisePrevValue);
@@ -342,25 +327,36 @@ void TapGenerator::transformLPC()
     for (int i=0; i<t.size(); i++)
     {
         // update the noise params for each tapper
+        double tsig = sigmaT[i];
+        double msig = sigmaM[i];
+        Logger::outputDebugString("player " + String(i) + ", tk: " + String(tsig) + ", m: " + String(msig));
+        
         TkNoise.add(getRandomValue(sigmaT[i]));
         MotorNoise.add(getRandomValue(sigmaM[i]));
+        
+//        double hnoise = TkNoise[i] + MotorNoise[i] - MotorNoisePrev[i];
         Hnoise.add(TkNoise[i] + MotorNoise[i] - MotorNoisePrev[i]);
+        
+        // Update logfile strings
+        TKNoiseStr = TKNoiseStr + String(TkNoise[i] / fs) + ", ";
+        MNoiseStr = MNoiseStr + String(MotorNoise[i] / fs) + ", ";
+        
         // apply the LPC model usig the gains and noise...
         double sumAsync = 0;
         for (int j=0; j<t.size(); j++)
         {
             if(j==0 && !userInputDetected)
-            {
-                asynch[i]->set(j, 0); // no asynch if tap didn't happen.
+            {   // no input player asynch if tap didn't happen.
+                asynch[i]->set(j, 0);
+                asyncStr = asyncStr + "0, ";
             } else {
                 asynch[i]->set(j, t[i] - t[j]);
+                asyncStr = asyncStr + String((t[i] - t[j]) / fs) + ", ";
             }
-            
+            alphaStr = alphaStr + String(alpha[i]->getUnchecked(j)) + ", ";
             asynchAlpha[i]->set(j, alpha[i]->getUnchecked(j) * asynch[i]->getUnchecked(j));
             sumAsync += asynchAlpha[i]->getUnchecked(j);
         }
-        Logger::outputDebugString(String(sumAsync));
-        
         if (i==0)
         {   // update input motor noise of input tapper...
             inputTapper.MNoisePrevValue = MotorNoise[i];
@@ -378,34 +374,37 @@ void TapGenerator::transformLPC()
 
 void TapGenerator::logResults(String inputString)
 {
-//    CSV structure ------
+// CSV File structure...
 // N, Input (V1), Violin 2, Viola, Cello, ,
 // v1 Int, v2 Int, vi Int, Ce Int, ,
 // v1 MVar, v2 MVar, vi MVar, ce MVar, ,
 // v1 TKVar, v2 TKVar, vi TKVar, ce TKVar, ,
 // Alpha 11, Alpha 12, Alpha 13, Alpha 14, Alpha 21, Alpha 22, Alpha 23, Alpha 24, Alpha 31, Alpha 32, Alpha 33, Alpha 34, Alpha 41, Alpha 42, Alpha 43, Alpha 44, ,
 // Async 11, Async 12, Async 13, Async 14, Async 21, Async 22, Async 23, Async 24, Async 31, Async 32, Async 33, Async 34, Async 41, Async 42, Async 43, Async 44
-//    CSV structure ------
+    
+    String onsetTimes = userInputDetected ? String(inputTapper.getOnsetTime() / fs)+", " : "NaN, ";
+    for (int i=0; i<numSynthesizedTappers; i++)
+    {
+        onsetTimes = onsetTimes + String(synthesizedTappers[i]->getOnsetTime() / fs) + ", ";
+    }
+    
+    String intervals;
+    if(beatCounter.inSamples() > 0) {
+        intervals = String(inputTapper.getPrevInterval() / fs) + ", ";
+        for (int i=0; i<numSynthesizedTappers; i++)
+        {
+            intervals = intervals + String(synthesizedTappers[i]->getPrevInterval() / fs) + ", ";
+        }
+    } else {
+        intervals = "NaN, NaN, NaN, NaN";
+    }
 
+    String outputLine = String(beatCounter.inSamples()) + ", " + onsetTimes + ", " + intervals + ", " + MNoiseStr + ", " + TKNoiseStr + ", " + asyncStr + ", " + alphaStr + "\n";
+    
     // Debugging ---------
     Logger::outputDebugString(inputString);
     // Debugging ---------
-    
-    String inputOnsetTime = "NaN";
-    if (userInputDetected)
-    {
-        inputOnsetTime = String(inputTapper.getOnsetTime() / fs);
-    }
-    captainsLog->writeString(inputOnsetTime + ", ");
-    for (int i=0; i<numSynthesizedTappers; i++)
-    {
-        if(i < numSynthesizedTappers-1) {
-            captainsLog->writeString(String(synthesizedTappers[i]->getOnsetTime() / fs) + ", ");
-        } else {
-            captainsLog->writeString(String(synthesizedTappers[i]->getOnsetTime() / fs));
-        }
-    }
-    captainsLog->writeString("\n");
+    captainsLog->writeString(outputLine);
 }
 
 

@@ -170,7 +170,19 @@ void MetroAudioProcessorEditor::sliderValueChanged(Slider *s)
     }
     else if(s == &TKNoiseSlider3)
     {
-        processor.updateSynthTapperTKNoise(2, TKNoiseSlider2.getValue());
+        processor.updateSynthTapperTKNoise(2, TKNoiseSlider3.getValue());
+    }
+    else if(s == &MNoiseSlider1)
+    {
+        processor.updateSynthTapperMNoise(0, MNoiseSlider1.getValue());
+    }
+    else if(s == &MNoiseSlider2)
+    {
+        processor.updateSynthTapperMNoise(1, MNoiseSlider2.getValue());
+    }
+    else if(s == &MNoiseSlider3)
+    {
+        processor.updateSynthTapperMNoise(2, MNoiseSlider3.getValue());
     }
     /*
      Update the alpha params here ------------------
@@ -257,7 +269,9 @@ void MetroAudioProcessorEditor::timerCallback()
     TKNoiseSlider1.setValue(*processor.TKNoiseParam1, dontSendNotification);
     TKNoiseSlider2.setValue(*processor.TKNoiseParam2, dontSendNotification);
     TKNoiseSlider3.setValue(*processor.TKNoiseParam3, dontSendNotification);
-    
+    MNoiseSlider1.setValue(*processor.MNoiseParam1, dontSendNotification);
+    MNoiseSlider2.setValue(*processor.MNoiseParam2, dontSendNotification);
+    MNoiseSlider3.setValue(*processor.MNoiseParam3, dontSendNotification);
     
     // alpha params from processor...
     alphaMatrix.b11.setValue(processor.tapManager->getAlpha(0, 0), dontSendNotification);
