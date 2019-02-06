@@ -38,14 +38,17 @@ MetroAudioProcessorEditor::MetroAudioProcessorEditor (MetroAudioProcessor& p)
     // synth Tapper sliders...
     addVelSlider(velTapper1);
     addRotarySlider(TKNoiseSlider1);
+    TKNoiseSlider1.setRange(0.0, 200.0, 0.5);
     addRotarySlider(MNoiseSlider1);
     
     addVelSlider(velTapper2);
     addRotarySlider(TKNoiseSlider2);
+    TKNoiseSlider2.setRange(0.0, 200.0, 0.5);
     addRotarySlider(MNoiseSlider2);
     
     addVelSlider(velTapper3);
     addRotarySlider(TKNoiseSlider3);
+    TKNoiseSlider3.setRange(0.0, 200.0, 0.5);
     addRotarySlider(MNoiseSlider3);
     
     // alpha sub-component...

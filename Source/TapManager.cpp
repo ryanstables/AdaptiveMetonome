@@ -7,7 +7,6 @@
 //
 #include "TapManager.hpp"
 
-
 //==============================================================================
 //========= Generator ==========================================================
 //==============================================================================
@@ -374,16 +373,6 @@ void TapGenerator::transformLPC()
 
 void TapGenerator::logResults(String inputString)
 {
-// CSV File structure...
-// N, Input (V1), Violin 2, Viola, Cello, ,
-// v1 Int, v2 Int, vi Int, Ce Int, ,
-// v1 MVar, v2 MVar, vi MVar, ce MVar, ,
-// v1 TKVar, v2 TKVar, vi TKVar, ce TKVar, ,
-// Alpha 11, Alpha 12, Alpha 13, Alpha 14, Alpha 21, Alpha 22, Alpha 23, Alpha 24, Alpha 31, Alpha 32, Alpha 33, Alpha 34, Alpha 41, Alpha 42, Alpha 43, Alpha 44, ,
-// Async 11, Async 12, Async 13, Async 14, Async 21, Async 22, Async 23, Async 24, Async 31, Async 32, Async 33, Async 34, Async 41, Async 42, Async 43, Async 44
-// P1 TKStd, P2 TKStd, P3 TKStd, P4 TKStd, , P1 MStd, P2 MStd, P3 MStd, P4 MStd,
-//
-    
     String onsetTimes = userInputDetected ? String(inputTapper.getOnsetTime() / fs)+", " : "NaN, ";
     for (int i=0; i<numSynthesizedTappers; i++)
     {
@@ -400,16 +389,12 @@ void TapGenerator::logResults(String inputString)
         intervals = "NaN, NaN, NaN, NaN, ";
     }
     String outputLine = String(beatCounter.inSamples()) + ", " + onsetTimes + ", " + intervals + ", " + MNoiseStr + ", " + TKNoiseStr + ", " + asyncStr + ", " + alphaStr + ", " + TKNParamStr + ", " + MNParamStr + ", " + volStr + "\n";
-    
-    
-    
-    
+
     // Debugging ---------
     Logger::outputDebugString(inputString);
     // Debugging ---------
     captainsLog->writeString(outputLine);
 }
-
 
 void TapGenerator::updateTappersPitch(int tapperNum)
 {

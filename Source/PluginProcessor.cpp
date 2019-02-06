@@ -42,9 +42,9 @@ MetroAudioProcessor::MetroAudioProcessor()
     addParameter(velParam1 = new AudioParameterInt("synthVel1", "Vel of synth Tapper 1", 0, 127, 127));
     addParameter(velParam2 = new AudioParameterInt("synthVel2", "Vel of synth Tapper 2", 0, 127, 127));
     addParameter(velParam3 = new AudioParameterInt("synthVel3", "Vel of synth Tapper 3", 0, 127, 127));
-    addParameter(TKNoiseParam1 = new AudioParameterFloat("synthTKNoise1", "Time Keeper Noise of synth Tapper 1", 0, 50, 0));
-    addParameter(TKNoiseParam2 = new AudioParameterFloat("synthTKNoise2", "Time Keeper Noise of synth Tapper 2", 0, 50, 0));
-    addParameter(TKNoiseParam3 = new AudioParameterFloat("synthTKNoise3", "Time Keeper Noise of synth Tapper 3", 0, 50, 0));
+    addParameter(TKNoiseParam1 = new AudioParameterFloat("synthTKNoise1", "Time Keeper Noise of synth Tapper 1", 0, 200, 0));
+    addParameter(TKNoiseParam2 = new AudioParameterFloat("synthTKNoise2", "Time Keeper Noise of synth Tapper 2", 0, 200, 0));
+    addParameter(TKNoiseParam3 = new AudioParameterFloat("synthTKNoise3", "Time Keeper Noise of synth Tapper 3", 0, 200, 0));
     addParameter(MNoiseParam1 = new AudioParameterFloat("synthMNoise1", "Motor Noise of synth Tapper 1", 0, 50, 0));
     addParameter(MNoiseParam2 = new AudioParameterFloat("synthMNoise2", "Motor Noise of synth Tapper 2", 0, 50, 0));
     addParameter(MNoiseParam3 = new AudioParameterFloat("synthMNoise3", "Motor Noise of synth Tapper 3", 0, 50, 0));
