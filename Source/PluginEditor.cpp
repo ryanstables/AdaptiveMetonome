@@ -316,10 +316,10 @@ void MetroAudioProcessorEditor::paint (Graphics& g)
     int velSliderWidth =leftPanel.getWidth()/4;
     auto VelocitySliderLabelArea = leftPanel.removeFromTop(30);
     g.setFont(18.f);
-    g.drawFittedText("V1", VelocitySliderLabelArea.removeFromLeft(velSliderWidth), Justification::centred, 1);
-    g.drawFittedText("V2", VelocitySliderLabelArea.removeFromLeft(velSliderWidth), Justification::centred, 1);
-    g.drawFittedText("Vio", VelocitySliderLabelArea.removeFromLeft(velSliderWidth), Justification::centred, 1);
-    g.drawFittedText("Cel", VelocitySliderLabelArea.removeFromLeft(velSliderWidth), Justification::centred, 1);
+    g.drawFittedText("P1 (in)", VelocitySliderLabelArea.removeFromLeft(velSliderWidth), Justification::centred, 1);
+    g.drawFittedText("P2", VelocitySliderLabelArea.removeFromLeft(velSliderWidth), Justification::centred, 1);
+    g.drawFittedText("P3", VelocitySliderLabelArea.removeFromLeft(velSliderWidth), Justification::centred, 1);
+    g.drawFittedText("P4", VelocitySliderLabelArea.removeFromLeft(velSliderWidth), Justification::centred, 1);
     
     auto VelocitySliderArea = leftPanel.removeFromTop(sliderheight);
     slider1.setBounds(VelocitySliderArea.removeFromLeft(velSliderWidth));
@@ -341,13 +341,25 @@ void MetroAudioProcessorEditor::paint (Graphics& g)
     MNoiseSlider3.setBounds(MNoiseSliderArea.removeFromLeft(velSliderWidth));
     
     
-    int alphaSliderWidth =rightPanel.getWidth()/4;
-    auto alphaSliderLabelArea = rightPanel.removeFromTop(30);
+
+    auto alphaLabelsTop = rightPanel.removeFromTop(30);
+    alphaLabelsTop.removeFromLeft(30);
+    auto alphaLabelsLeft = rightPanel.removeFromLeft(30);
+    int alphaSliderWidth = rightPanel.getWidth()/4;
+    int alphaSliderHeight = rightPanel.getHeight()/4;
+
+    
     g.setFont(18.f);
-    g.drawFittedText("V1", alphaSliderLabelArea.removeFromLeft(alphaSliderWidth), Justification::centred, 1);
-    g.drawFittedText("V2", alphaSliderLabelArea.removeFromLeft(alphaSliderWidth), Justification::centred, 1);
-    g.drawFittedText("Vio", alphaSliderLabelArea.removeFromLeft(alphaSliderWidth), Justification::centred, 1);
-    g.drawFittedText("Cel", alphaSliderLabelArea.removeFromLeft(alphaSliderWidth), Justification::centred, 1);
+    g.drawFittedText("P1", alphaLabelsTop.removeFromLeft(alphaSliderWidth), Justification::centred, 1);
+    g.drawFittedText("P2", alphaLabelsTop.removeFromLeft(alphaSliderWidth), Justification::centred, 1);
+    g.drawFittedText("P3", alphaLabelsTop.removeFromLeft(alphaSliderWidth), Justification::centred, 1);
+    g.drawFittedText("P4", alphaLabelsTop.removeFromLeft(alphaSliderWidth), Justification::centred, 1);
+    
+    g.drawFittedText("P1", alphaLabelsLeft.removeFromTop(alphaSliderHeight), Justification::centred, 1);
+    g.drawFittedText("P2", alphaLabelsLeft.removeFromTop(alphaSliderHeight), Justification::centred, 1);
+    g.drawFittedText("P3", alphaLabelsLeft.removeFromTop(alphaSliderHeight), Justification::centred, 1);
+    g.drawFittedText("P4", alphaLabelsLeft.removeFromTop(alphaSliderHeight), Justification::centred, 1);
+
     
     alphaMatrix.setBounds(rightPanel.removeFromTop(sliderheight + sliderwidth*2));
     

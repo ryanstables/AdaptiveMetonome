@@ -13,7 +13,6 @@
 //==============================================================================
 TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBlock, String dataPath)
 {
-    
     setLocalDataPath(dataPath);
     
     // store number of tappers...
@@ -33,12 +32,6 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
                   String(time.getDayOfMonth()) +
                   time.getMonthName(true) +
                   String(time.getYear()) + ".csv");
-    
-//    File logFile (localDataPath+"savedData.m");
-    
-//    logFile.appendText("%% ----------------------------\n%% "+time.getCurrentTime().toString(true, true)+"\n");
-//    logFile.appendText("fs = "+String(fs)+";\n");
-//    logFile.appendText("numTappers = "+String(NumTappers)+";\n");
     
     // allocate the tappers...
     for (int i=0; i<numSynthesizedTappers; i++)
@@ -87,7 +80,8 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     readPitchListFromPreloadedArray();
     
 //    logFile.appendText("Input (V1), Violin 2, Viola, Cello");
-    logFile.appendText("N, Input (V1), Violin 2, Viola, Cello, , v1 Int, v2 Int, vi Int, Ce Int, , v1 MVar, v2 MVar, vi MVar, ce MVar, ,v1 TKVar, v2 TKVar, vi TKVar, ce TKVar, , Async 11, Async 12, Async 13, Async 14, Async 21, Async 22, Async 23, Async 24, Async 31, Async 32, Async 33, Async 34, Async 41, Async 42, Async 43, Async 44, , Alpha 11, Alpha 12, Alpha 13, Alpha 14, Alpha 21, Alpha 22, Alpha 23, Alpha 24, Alpha 31, Alpha 32, Alpha 33, Alpha 34, Alpha 41, Alpha 42, Alpha 43, Alpha 44 \n");
+//    logFile.appendText("N, P1 (input), P2, P3, P4, , P1 Int, P2 Int, P3 Int, P4 Int, , P1 MVar, P2 MVar, P3 MVar, P4 MVar, ,P1 TKVar, P2 TKVar, P3 TKVar, P4 TKVar, , Async 11, Async 12, Async 13, Async 14, Async 21, Async 22, Async 23, Async 24, Async 31, Async 32, Async 33, Async 34, Async 41, Async 42, Async 43, Async 44, , Alpha 11, Alpha 12, Alpha 13, Alpha 14, Alpha 21, Alpha 22, Alpha 23, Alpha 24, Alpha 31, Alpha 32, Alpha 33, Alpha 34, Alpha 41, Alpha 42, Alpha 43, Alpha 44 \n");
+    logFile.appendText("N, P1 (input), P2, P3, P4, , P1 Int, P2 Int, P3 Int, P4 Int, , P1 MVar, P2 MVar, P3 MVar, P4 MVar, ,P1 TKVar, P2 TKVar, P3 TKVar, P4 TKVar, , Async 11, Async 12, Async 13, Async 14, Async 21, Async 22, Async 23, Async 24, Async 31, Async 32, Async 33, Async 34, Async 41, Async 42, Async 43, Async 44, , Alpha 11, Alpha 12, Alpha 13, Alpha 14, Alpha 21, Alpha 22, Alpha 23, Alpha 24, Alpha 31, Alpha 32, Alpha 33, Alpha 34, Alpha 41, Alpha 42, Alpha 43, Alpha 44, , P1 TKStd, P2 TKStd, P3 TKStd, P4 TKStd, , P1 MStd, P2 MStd, P3 MStd, P4 MStd, , P1 Vol, P2 Vol, P3 Vol, P4 Vol \n");
     captainsLog = new FileOutputStream (logFile);
 }
 
@@ -301,7 +295,7 @@ void TapGenerator::transformLPC()
 {
     Array<double> t, sigmaM, sigmaT, MotorNoisePrev,    /* onset times and noise params */
                   TkNoise, MotorNoise, Hnoise;          /* new noise vars */
-    TKNoiseStr = MNoiseStr = alphaStr = asyncStr = ""; // reset logFile strings
+    TKNoiseStr = MNoiseStr = alphaStr = asyncStr = TKNParamStr = MNParamStr = volStr = ""; // reset logFile strings
     if(userInputDetected) {
         t.add(inputTapper.getOnsetTime()); // ...first add the input tapper
         MotorNoisePrev.add(inputTapper.MNoisePrevValue);
@@ -337,9 +331,15 @@ void TapGenerator::transformLPC()
 //        double hnoise = TkNoise[i] + MotorNoise[i] - MotorNoisePrev[i];
         Hnoise.add(TkNoise[i] + MotorNoise[i] - MotorNoisePrev[i]);
         
+        
         // Update logfile strings
+        double vol = (i == 0) ? double(inputTapper.getVel()) : double(synthesizedTappers[i-1] -> getVel());
         TKNoiseStr = TKNoiseStr + String(TkNoise[i] / fs) + ", ";
         MNoiseStr = MNoiseStr + String(MotorNoise[i] / fs) + ", ";
+        TKNParamStr = TKNParamStr + String(tsig / fs) + ", ";
+        MNParamStr = MNParamStr + String(msig / fs) + ", ";
+        volStr = volStr + String( vol / 128.f) + ", ";
+
         
         // apply the LPC model usig the gains and noise...
         double sumAsync = 0;
@@ -381,13 +381,14 @@ void TapGenerator::logResults(String inputString)
 // v1 TKVar, v2 TKVar, vi TKVar, ce TKVar, ,
 // Alpha 11, Alpha 12, Alpha 13, Alpha 14, Alpha 21, Alpha 22, Alpha 23, Alpha 24, Alpha 31, Alpha 32, Alpha 33, Alpha 34, Alpha 41, Alpha 42, Alpha 43, Alpha 44, ,
 // Async 11, Async 12, Async 13, Async 14, Async 21, Async 22, Async 23, Async 24, Async 31, Async 32, Async 33, Async 34, Async 41, Async 42, Async 43, Async 44
+// P1 TKStd, P2 TKStd, P3 TKStd, P4 TKStd, , P1 MStd, P2 MStd, P3 MStd, P4 MStd,
+//
     
     String onsetTimes = userInputDetected ? String(inputTapper.getOnsetTime() / fs)+", " : "NaN, ";
     for (int i=0; i<numSynthesizedTappers; i++)
     {
         onsetTimes = onsetTimes + String(synthesizedTappers[i]->getOnsetTime() / fs) + ", ";
-    }
-    
+    }    
     String intervals;
     if(beatCounter.inSamples() > 0) {
         intervals = String(inputTapper.getPrevInterval() / fs) + ", ";
@@ -396,10 +397,12 @@ void TapGenerator::logResults(String inputString)
             intervals = intervals + String(synthesizedTappers[i]->getPrevInterval() / fs) + ", ";
         }
     } else {
-        intervals = "NaN, NaN, NaN, NaN";
+        intervals = "NaN, NaN, NaN, NaN, ";
     }
-
-    String outputLine = String(beatCounter.inSamples()) + ", " + onsetTimes + ", " + intervals + ", " + MNoiseStr + ", " + TKNoiseStr + ", " + asyncStr + ", " + alphaStr + "\n";
+    String outputLine = String(beatCounter.inSamples()) + ", " + onsetTimes + ", " + intervals + ", " + MNoiseStr + ", " + TKNoiseStr + ", " + asyncStr + ", " + alphaStr + ", " + TKNParamStr + ", " + MNParamStr + ", " + volStr + "\n";
+    
+    
+    
     
     // Debugging ---------
     Logger::outputDebugString(inputString);
@@ -468,7 +471,6 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
                 resetTriggeredFlags();
 
                 Logger::outputDebugString("-----------------------------");
-
             }
             else // ...if no user input has happened yet...
             {

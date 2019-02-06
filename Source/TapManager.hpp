@@ -14,19 +14,7 @@
 #include "PreloadedMIDI.h"
 #include <vector>
 
-// ------- Todo
-//
-// Alan -
-// - make output unique csv files (done)
-// - check all alpha/noise parameters are working correctly
-// - transfer all ui params & fs over during preparetoplay
-// - keep recording taps after MIDI flie has stopped
-//
-// 1 - read input tapper notes from file (overwrite output buffer)
-// 2 - connect the UI params to alphas/noise vars
-// 3 - make sure everything in the constructor is set using the reset() methods, so when playhead stops, the initial stae resumes.
-//      - allow assignable input tappers (select channel to tap to)
-// ----------
+// -------
 // tapping workflow...
 // 0 - procesor has a global counter that gets passed into the tapGenerator
 // 1 - tapGenerator uses the counter to call the tappers
@@ -34,7 +22,6 @@
 // Notes:
 // if there are more than 1 taps at a detected beat, only the first is chosen.
 // the LPC model only gets applied when there is a user input.
-
 
 // ==============================================================================
 // ========= Generator ==========================================================
@@ -109,7 +96,7 @@ private:
     int     TKInterval   = 22050; /*overwrite these values from host*/
     int inputTapAcceptanceWindow, nextWindowThreshold=TKInterval*1.5; //SET THIS PROPERLY!!!
     // Strings for logfile
-    String TKNoiseStr, MNoiseStr, alphaStr, asyncStr;
+    String TKNoiseStr, MNoiseStr, alphaStr, asyncStr, TKNParamStr, MNParamStr, volStr;
     
 };
 
