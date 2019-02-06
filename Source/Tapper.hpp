@@ -36,17 +36,17 @@ public:
     int  getChannel(){return MIDIChannel;};
     double  getMNoiseStdInSamples(double fs){return MNoiseStd/1000.f * fs;};
     double  getTKNoiseStdInSamples(double fs){return TKNoiseStd/1000.f * fs;};
-    
+    void setTriggeredByHuman(bool x){prevEventTriggeredByHuman = triggeredByHuman; triggeredByHuman = x;};
+    bool thisEventWasTriggeredByHuman(){return triggeredByHuman;};
+    bool prevEventWasTriggeredByHuman(){return  prevEventTriggeredByHuman;};
     void setInterval(int x){prevInterval = interval; interval=x;};
     int  getInterval(){return interval;};
     int  getPrevInterval(){return prevInterval;};
     int  getOnsetTime(){return onsetTime.inSamples();};
     int  getPrevOnsetTime(){return prevOnsetTime.inSamples();};
-    void setNextOnsetTime(int x){nextOnsetTime = x;};
-    
+    void setNextOnsetTime(int x){setTriggeredByHuman(false); nextOnsetTime = x;};
     void turnNoteOn(MidiBuffer&, int, Counter, int, bool);
     void turnNoteOff(MidiBuffer&, int, Counter, bool);
-    
     void updateParameters(int ID, int channel, int freq, int noteLen, int interval, int velocity);
     
     // counter functions...
@@ -73,10 +73,8 @@ private:
     interval=22050, prevInterval = 22050, beatDivision=2,            /*overwrite from host*/
     globalBeatNumber = 0,   // inject the beat number from the TapManager to check for valid prevOnsetTimes
     nextOnsetTime;
-    
     Counter countdownToOffset;
-    
-    bool noteActive = false;
+    bool noteActive = false, triggeredByHuman = false, prevEventTriggeredByHuman = false;
 };
 
 

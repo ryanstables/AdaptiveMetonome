@@ -75,11 +75,10 @@ private:
     
     // timer params...
     int     frameLen     = 1024;
-    
     double  bpm          = 120.f,
             fs           = 44100.f,
             beatDivision = 2.f;
-
+    int numIntroBeeps = 4;
     Random rand;
     Counter beatCounter, numberOfInputTaps, trialNum;
     

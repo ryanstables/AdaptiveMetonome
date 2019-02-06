@@ -313,7 +313,7 @@ void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& m
     getPlayHead()->getCurrentPosition(playhead);
     currentBPM = playhead.bpm;
     
-    // do when plugin opens (we don't have access to an accurate bpm in prepareToPlay())
+    // do this when plugin opens (we don't have access to an accurate bpm in prepareToPlay())
     if( (globalCounter.inSamples() == 0 && !bpmAlreadyAllocated)|| bpmValueChanged())
     {
         bpmAlreadyAllocated = true;

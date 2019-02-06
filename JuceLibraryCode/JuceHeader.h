@@ -40,6 +40,7 @@
 namespace ProjectInfo
 {
     const char* const  projectName    = "Metro";
+    const char* const  companyName    = "RyanStables";
     const char* const  versionString  = "1.1.0";
     const int          versionNumber  = 0x10100;
 }

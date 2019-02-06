@@ -33,7 +33,6 @@ void Tapper::reset()
     
     setChannel(1);
     setNoteLen(256);          // in samples
-    setVel(127);              // in MidiNotes
     setFreq(60);              // ...
     
     // reset all the counters...
@@ -43,6 +42,8 @@ void Tapper::reset()
     numberOfNoteOns.reset();
     numberOfNoteOffs.reset();
     noteActive = false;
+    triggeredByHuman = false;
+    prevEventTriggeredByHuman = false;
 }
 
 void Tapper::turnNoteOn(MidiBuffer &midiMessages, int sampleNo, Counter globalCounter, int beatNumber, bool updateMidiInOutputBuffer)
