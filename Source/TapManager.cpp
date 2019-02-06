@@ -97,6 +97,7 @@ void TapGenerator::reset()
     // reset all of the counters...
     beatCounter.reset();
     numberOfInputTaps.reset();
+    inputTapper.numberOfNoteOffs.reset();
     resetTriggeredFlags();    
     // this is an absolute value, so it gets reset based on the BPM...
     nextWindowThreshold=TKInterval*1.5;
@@ -168,11 +169,7 @@ void TapGenerator::updateInputTapper(MidiBuffer &midiMessages, Counter globalCou
 {
     // ------ update the pitch of the input tapper -------
     int currentEventNum = inputTapper.numberOfNoteOffs.inSamples();
-    if(currentEventNum < pitchList[0]->size())
-    {
-        inputTapper.setFreq(pitchList[0]->getUnchecked(currentEventNum));
-    }
-
+    
     // ------ if the block has MIDI events in it ------
     if(!midiMessages.isEmpty() /*&& !userInputDetected*/)
     {
@@ -185,6 +182,13 @@ void TapGenerator::updateInputTapper(MidiBuffer &midiMessages, Counter globalCou
         {
             // ------ send pitch and vol values from inputTapper to MidiBuffer-------
             if(result.isNoteOnOrOff()) {
+                if(currentEventNum < pitchList[0]->size())
+                {
+                    Logger::outputDebugString("CurrEvent: " + String(currentEventNum) + ", beatNum: " + String(beatNumber) + ", max: " + String(pitchList[0]->size()));
+                    
+                    int num = pitchList[0]->getUnchecked(currentEventNum);
+                    inputTapper.setFreq(num);
+                }
                 result.setVelocity(inputTapper.getVel() / 128.f);
                 result.setNoteNumber(inputTapper.getFreq());
                 newMidiBuffer.addEvent(result, samplePos);
