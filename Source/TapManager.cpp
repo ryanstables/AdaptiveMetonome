@@ -50,6 +50,7 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     // init alpha and [t(n-1,i)-t(n-1,j)]..
     for (int i=0; i<NumTappers; i++)
     {
+        velocities.add(0);
         alpha.add(new Array<double>);
         asynch.add(new Array<double>);
         asynchAlpha.add(new Array<double>);
@@ -91,7 +92,12 @@ void TapGenerator::reset()
 {
     // reset the tappers...
     for (int tapper=0; tapper<numSynthesizedTappers; tapper++)
+    {
+        int newvel = velocities[tapper+1];
         synthesizedTappers[tapper]->reset();
+        synthesizedTappers[tapper]->setVel(newvel);
+    }
+    
     // reset theTKinterval etc...
     updateBPM(bpm);
     // reset all of the counters...

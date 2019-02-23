@@ -265,6 +265,10 @@ void MetroAudioProcessor::updatedSynthTapperVelocity(int tapperNum, int vel)
 
 void MetroAudioProcessor::transferUIParamsToTappers()
 {
+    tapManager->velocities.set(0, *gainsParam);
+    tapManager->velocities.set(1, *velParam1);
+    tapManager->velocities.set(2, *velParam1);
+    tapManager->velocities.set(3, *velParam1);
     tapManager->synthesizedTappers[0]->TKNoiseStd = *TKNoiseParam1;
     tapManager->synthesizedTappers[1]->TKNoiseStd = *TKNoiseParam2;
     tapManager->synthesizedTappers[2]->TKNoiseStd = *TKNoiseParam3;

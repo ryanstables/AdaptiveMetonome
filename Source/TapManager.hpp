@@ -59,6 +59,7 @@ public:
     OwnedArray<Tapper>  synthesizedTappers;
     Tapper inputTapper;
     OwnedArray<Array<double>> alpha; //alpha can be updated by the UI
+    Array <int> velocities; // populated by the processor
     
 private:
     
@@ -96,7 +97,6 @@ private:
     int inputTapAcceptanceWindow, nextWindowThreshold=TKInterval*1.5; //SET THIS PROPERLY!!!
     // Strings for logfile
     String TKNoiseStr, MNoiseStr, alphaStr, asyncStr, TKNParamStr, MNParamStr, volStr;
-    
 };
 
 #endif /* TapManager_hpp */
