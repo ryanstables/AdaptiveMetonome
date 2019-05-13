@@ -396,8 +396,6 @@ void TapGenerator::logResults(String inputString)
     String outputLine = String(beatCounter.inSamples()) + ", " + onsetTimes + ", " + intervals + ", " + MNoiseStr + ", " + TKNoiseStr + ", " + asyncStr + ", " + alphaStr + ", " + TKNParamStr + ", " + MNParamStr + ", " + volStr + "\n";
 
     // Debugging ---------
-//    Logger::outputDebugString(inputString);
-    // Debugging ---------
     captainsLog->writeString(outputLine);
 }
 
@@ -454,12 +452,10 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
                 // apply transformation...
                 transformLPC();
                 inputTapper.setTriggeredByHuman(true); // <- register that input tap has happened
-//                logResults("Beat ["+String(beatCounter.inSamples())+"], user input ["+String(numberOfInputTaps.inSamples())+"] found");
+                logResults("Beat ["+String(beatCounter.inSamples())+"], user input ["+String(numberOfInputTaps.inSamples())+"] found");
                 beatCounter.iterate(); // count the number of registered beats
                 updateTapAcceptanceWindow();
                 resetTriggeredFlags();
-
-//                Logger::outputDebugString("-----------------------------");
             }
             else // ...if no user input has happened yet...
             {
@@ -471,11 +467,10 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
                     transformLPC();
                     inputTapper.setTriggeredByHuman(false); // <--- register that a tap never happened
                     // Recalculate timing params without the user input asnynch...
-//                    logResults("Beat ["+String(beatCounter.inSamples())+"] threshold reached");
+                    logResults("Beat ["+String(beatCounter.inSamples())+"] threshold reached");
                     updateTapAcceptanceWindow(); //<--- calculate the next window thresh here
                     resetTriggeredFlags();
-                    beatCounter.iterate(); // count the beats
-//                    Logger::outputDebugString("-----------------------------");
+                    beatCounter.iterate(); // count the beats                    
                 }
                 else
                 {
