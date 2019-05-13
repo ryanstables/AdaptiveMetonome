@@ -97,6 +97,7 @@ private:
     int inputTapAcceptanceWindow, nextWindowThreshold=TKInterval*1.5; //SET THIS PROPERLY!!!
     // Strings for logfile
     String TKNoiseStr, MNoiseStr, alphaStr, asyncStr, TKNParamStr, MNParamStr, volStr;
+    int currentBeatWithNoteOn;
 };
 
 #endif /* TapManager_hpp */

@@ -173,9 +173,6 @@ void TapGenerator::printPitchList()
 
 void TapGenerator::updateInputTapper(MidiBuffer &midiMessages, Counter globalCounter, int beatNumber)
 {
-    // ------ update the pitch of the input tapper -------
-    int currentEventNum = inputTapper.numberOfNoteOffs.inSamples();
-    
     // ------ if the block has MIDI events in it ------
     if(!midiMessages.isEmpty() /*&& !userInputDetected*/)
     {
@@ -183,42 +180,35 @@ void TapGenerator::updateInputTapper(MidiBuffer &midiMessages, Counter globalCou
         MidiBuffer newMidiBuffer;
         MidiBuffer::Iterator messages(midiMessages);
         MidiMessage result;
-        int samplePos;
+        int samplePos, num, currentEventNum;
         while(messages.getNextEvent(result, samplePos))
         {
-            // ------ send pitch and vol values from inputTapper to MidiBuffer-------
-            if(result.isNoteOnOrOff()) {
-                if(currentEventNum < pitchList[0]->size())
+            if(result.isNoteOnOrOff() && beatNumber >= 0) {
+                // ------ If msg is noteOn, from current channel, and hasn't yet been triggered -------
+                if(result.isNoteOn() && inputTapper.getChannel() == result.getChannel() && !userInputDetected)
                 {
-                    Logger::outputDebugString("CurrEvent: " + String(currentEventNum) + ", beatNum: " + String(beatNumber) + ", max: " + String(pitchList[0]->size()));
-                    
-                    int num = pitchList[0]->getUnchecked(currentEventNum);
-                    inputTapper.setFreq(num);
+                    currentBeatWithNoteOn = beatNumber;
+                    inputTapper.turnNoteOn(midiMessages, samplePos, globalCounter, beatNumber, false);
+                    userInputDetected = true; // tell the tapManager that a noteOn has been registered.
+                    numberOfInputTaps.iterate(); // count the number of taps that have been logged
                 }
+                // ------ If message is noteOff and from current channel happens -------
+                else if(result.isNoteOff() && inputTapper.getChannel() == result.getChannel())
+                {
+                    inputTapper.turnNoteOff(midiMessages, samplePos, globalCounter, false);
+                }
+                
+                // stop reading the pitch array when EOF...
+                if(currentBeatWithNoteOn < pitchList[0]->size()) {
+                    num = pitchList[0]->getUnchecked(currentBeatWithNoteOn);
+                } else {
+                    num = pitchList[0]->getUnchecked(pitchList[0]->size()-1);
+                }
+                // set params and write to the midibuffer...
+                inputTapper.setFreq(num);
                 result.setVelocity(inputTapper.getVel() / 128.f);
                 result.setNoteNumber(inputTapper.getFreq());
                 newMidiBuffer.addEvent(result, samplePos);
-            }
-            
-            // ------ If noteOn from current channel happens -------
-            if(
-               result.isNoteOn() && // if the incoming event is a noteOn
-               inputTapper.getChannel() == result.getChannel() && // and it is from this channel
-               !userInputDetected // and no other noteOn event has been logged during this window...
-            )
-            {
-                inputTapper.turnNoteOn(midiMessages, samplePos, globalCounter, beatNumber, false);
-                userInputDetected = true; // tell the tapManager that a noteOn has been registered.
-                numberOfInputTaps.iterate(); // count the number of taps that have been logged
-            }
-            // ------ If noteOff from current channel happens -------
-            else if(
-                    result.isNoteOff() && // if the incoming event is a noteOff
-                    inputTapper.getChannel() == result.getChannel() // and it is from this channel
-                    // but we don't care if a note has already been logged as this may cause noteOffs to be missed when the unserInputDetected flag is reset!
-                    )
-            {
-                inputTapper.turnNoteOff(midiMessages, samplePos, globalCounter, false);
             }
         }
         midiMessages = newMidiBuffer;
@@ -406,7 +396,7 @@ void TapGenerator::logResults(String inputString)
     String outputLine = String(beatCounter.inSamples()) + ", " + onsetTimes + ", " + intervals + ", " + MNoiseStr + ", " + TKNoiseStr + ", " + asyncStr + ", " + alphaStr + ", " + TKNParamStr + ", " + MNParamStr + ", " + volStr + "\n";
 
     // Debugging ---------
-    Logger::outputDebugString(inputString);
+//    Logger::outputDebugString(inputString);
     // Debugging ---------
     captainsLog->writeString(outputLine);
 }
@@ -444,7 +434,7 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
     // update block size from process block...
     frameLen = blockSize;
     // update the input tapper with incoming on/off messages...
-    updateInputTapper(midiMessages, globalCounter, beatCounter.inSamples());
+    updateInputTapper(midiMessages, globalCounter, beatCounter.inSamples() - numIntroBeeps);
     
     // GLOBAL SAMPLE COUNTER LOOP --------------------------------------
     for (int sampleNum=0; sampleNum<frameLen; sampleNum++)
@@ -464,12 +454,12 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
                 // apply transformation...
                 transformLPC();
                 inputTapper.setTriggeredByHuman(true); // <- register that input tap has happened
-                logResults("Beat ["+String(beatCounter.inSamples())+"], user input ["+String(numberOfInputTaps.inSamples())+"] found");
+//                logResults("Beat ["+String(beatCounter.inSamples())+"], user input ["+String(numberOfInputTaps.inSamples())+"] found");
                 beatCounter.iterate(); // count the number of registered beats
                 updateTapAcceptanceWindow();
                 resetTriggeredFlags();
 
-                Logger::outputDebugString("-----------------------------");
+//                Logger::outputDebugString("-----------------------------");
             }
             else // ...if no user input has happened yet...
             {
@@ -481,11 +471,11 @@ void TapGenerator::nextBlock(MidiBuffer &midiMessages, Counter &globalCounter, i
                     transformLPC();
                     inputTapper.setTriggeredByHuman(false); // <--- register that a tap never happened
                     // Recalculate timing params without the user input asnynch...
-                    logResults("Beat ["+String(beatCounter.inSamples())+"] threshold reached");
+//                    logResults("Beat ["+String(beatCounter.inSamples())+"] threshold reached");
                     updateTapAcceptanceWindow(); //<--- calculate the next window thresh here
                     resetTriggeredFlags();
                     beatCounter.iterate(); // count the beats
-                    Logger::outputDebugString("-----------------------------");
+//                    Logger::outputDebugString("-----------------------------");
                 }
                 else
                 {
