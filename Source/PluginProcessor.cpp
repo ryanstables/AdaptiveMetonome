@@ -339,6 +339,7 @@ void MetroAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& m
         tapManager->reset();
         transferUIParamsToTappers();
         globalCounter.reset();
+        tapManager->initLogFile();
     }
     else // ...playhead not moving
     {

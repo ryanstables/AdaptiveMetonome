@@ -61,6 +61,8 @@ public:
     OwnedArray<Array<double>> alpha; //alpha can be updated by the UI
     Array <int> velocities; // populated by the processor
     
+    void initLogFile();
+    
 private:
     
     // private fns...
@@ -95,8 +97,9 @@ private:
     OwnedArray<Array<double>> asynch, asynchAlpha;
     int     TKInterval   = 22050; /*overwrite these values from host*/
     int inputTapAcceptanceWindow, nextWindowThreshold=TKInterval*1.5; //SET THIS PROPERLY!!!
+    
     // Strings for logfile
-    String TKNoiseStr, MNoiseStr, alphaStr, asyncStr, TKNParamStr, MNParamStr, volStr;
+    String TKNoiseStr, MNoiseStr, alphaStr, asyncStr, TKNParamStr, MNParamStr, volStr, baseString;
     int currentBeatWithNoteOn;
 };
 

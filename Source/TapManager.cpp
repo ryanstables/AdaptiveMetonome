@@ -19,19 +19,6 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     fs = sampleRate;
     frameLen = samplesPerBlock;
     
-    // open the logfile/stream (this will be moved when i create a 'filename' text input)
-    Time time;
-    time = time.getCurrentTime();
-    
-    File logFile = File::getSpecialLocation(File::userDocumentsDirectory)
-    .getChildFile("Log_"+
-                  String(time.getHours()) + "-" +
-                  String(time.getMinutes()) + "-" +
-                  String(time.getSeconds()) + "_" +
-                  String(time.getDayOfMonth()) +
-                  time.getMonthName(true) +
-                  String(time.getYear()) + ".csv");
-    
     // allocate the tappers...
     for (int i=0; i<numSynthesizedTappers; i++)
     {
@@ -78,8 +65,23 @@ TapGenerator::TapGenerator(int NumTappers, double sampleRate, int samplesPerBloc
     
     // initialise pitch list...
     readPitchListFromPreloadedArray();
+
+    // open the logfile/stream (this will be moved when i create a 'filename' text input)
+    Time time;
+    time = time.getCurrentTime();
+    baseString = "Log_" + String(time.getHours()) + "-" + String(time.getMinutes()) + "-" + String(time.getSeconds()) + "_" + String(time.getDayOfMonth()) + time.getMonthName(true) + String(time.getYear());
+    initLogFile();
+    
+}
+
+void TapGenerator::initLogFile()
+{
+    File logFile = File::getSpecialLocation(File::userDocumentsDirectory)
+    .getChildFile(baseString + "trial-" + String(trialNum.inSamples() + 1) + ".csv");
+    
     logFile.appendText("N, P1 (input), P2, P3, P4, , P1 Int, P2 Int, P3 Int, P4 Int, , P1 MVar, P2 MVar, P3 MVar, P4 MVar, ,P1 TKVar, P2 TKVar, P3 TKVar, P4 TKVar, , Async 11, Async 12, Async 13, Async 14, Async 21, Async 22, Async 23, Async 24, Async 31, Async 32, Async 33, Async 34, Async 41, Async 42, Async 43, Async 44, , Alpha 11, Alpha 12, Alpha 13, Alpha 14, Alpha 21, Alpha 22, Alpha 23, Alpha 24, Alpha 31, Alpha 32, Alpha 33, Alpha 34, Alpha 41, Alpha 42, Alpha 43, Alpha 44, , P1 TKStd, P2 TKStd, P3 TKStd, P4 TKStd, , P1 MStd, P2 MStd, P3 MStd, P4 MStd, , P1 Vol, P2 Vol, P3 Vol, P4 Vol \n");
     captainsLog = new FileOutputStream (logFile);
+    
 }
 
 TapGenerator::~TapGenerator()
